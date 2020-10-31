@@ -10,7 +10,7 @@ import (
 
 // TestTagRepositoryBehaviour does what its name says
 func TestTagRepositoryBehaviour(t *testing.T, abstractRepo domain.TagRepository) {
-	t.Run("CreateMany and GetAll", func(t *testing.T) {
+	t.Run("CreateMany and Get", func(t *testing.T) {
 		insertedTags := []domain.Tag{
 			{
 				Name: "NewTagName",
@@ -27,12 +27,12 @@ func TestTagRepositoryBehaviour(t *testing.T, abstractRepo domain.TagRepository)
 		if err != nil {
 			t.Fatalf("TagRepository.CreateMany: Failed to add Tags: %s", err)
 		}
-		selectedTags, err := abstractRepo.GetAll(ctx)
+		selectedTags, err := abstractRepo.Get(ctx)
 		if err != nil {
-			t.Fatalf("TagRepository.GetAll: Failed to select all Tags: %s", err)
+			t.Fatalf("TagRepository.Get: Failed to select all Tags: %s", err)
 		}
 		if len(selectedTags) != numOfInsertedRows {
-			t.Fatalf("TagRepository.GetAll: Didn't return all newly inserted Tags: %s", err)
+			t.Fatalf("TagRepository.Get: Didn't return all newly inserted Tags: %s", err)
 		}
 		if reflect.DeepEqual(insertedTags, selectedTags) == false {
 			t.Fatal("Inserted Tags are not the same as selected ones database")
@@ -62,7 +62,7 @@ func TestTagRepositoryBehaviour(t *testing.T, abstractRepo domain.TagRepository)
 		if err != nil {
 			t.Fatalf("TagRepository.RemoveMany: Failed to remove Tags: %s", err)
 		}
-		selectedTags, _ := abstractRepo.GetAll(ctx)
+		selectedTags, _ := abstractRepo.Get(ctx)
 		if len(selectedTags) != 0 {
 			t.Fatalf("TagRepository.RemoveMany: Did not remove all Tags. Database still contains some: %s", err)
 		}

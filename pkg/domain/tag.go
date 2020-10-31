@@ -11,7 +11,7 @@ type Tag struct {
 // TagRepository is the contract that all implementations must implement
 type TagRepository interface {
 	CreateMany(ctx context.Context, tags []Tag) ([]Tag, error)
-	GetAll(ctx context.Context) ([]Tag, error)
+	Get(ctx context.Context) ([]Tag, error)
 	RemoveMany(ctx context.Context, tagIDs []uint) error
 	RemoveAll(ctx context.Context) error
 }

@@ -45,8 +45,8 @@ func (r *TagRepository) CreateMany(ctx context.Context, tags []domain.Tag) ([]do
 	return got, nil
 }
 
-// GetAll returns all Tags
-func (r *TagRepository) GetAll(ctx context.Context) ([]domain.Tag, error) {
+// Get returns all Tags
+func (r *TagRepository) Get(ctx context.Context) ([]domain.Tag, error) {
 	q := r.storage.SB.Select("*").From("tags")
 
 	sql, args, err := q.ToSql()
