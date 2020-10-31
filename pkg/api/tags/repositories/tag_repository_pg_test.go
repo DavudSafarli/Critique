@@ -3,8 +3,8 @@ package repositories
 import (
 	"testing"
 
-	"github.com/DavudSafarli/Critique/pkg/api/domaintest"
 	"github.com/DavudSafarli/Critique/pkg/database/postgres"
+	"github.com/DavudSafarli/Critique/pkg/domain_test"
 	"github.com/DavudSafarli/Critique/pkg/util"
 )
 
@@ -23,5 +23,5 @@ func TestRepository(t *testing.T) {
 	repo := &TagRepository{
 		storage: storage,
 	}
-	domaintest.TestTagRepositoryBehaviour(t, repo)
+	domain_test.TestTagRepositoryBehaviour(t, repo)
 }

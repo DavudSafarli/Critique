@@ -1,11 +1,11 @@
-package domaintest
+package domain_test
 
 import (
 	"context"
 	"reflect"
 	"testing"
 
-	"github.com/DavudSafarli/Critique/pkg/api/domain"
+	"github.com/DavudSafarli/Critique/pkg/domain"
 )
 
 // TestTagRepositoryBehaviour does what its name says

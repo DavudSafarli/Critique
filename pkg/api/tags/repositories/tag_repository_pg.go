@@ -5,8 +5,8 @@ import (
 
 	sq "github.com/Masterminds/squirrel"
 
-	"github.com/DavudSafarli/Critique/pkg/api/domain"
 	"github.com/DavudSafarli/Critique/pkg/database/postgres"
+	"github.com/DavudSafarli/Critique/pkg/domain"
 )
 
 // TagRepository is TagRepository
