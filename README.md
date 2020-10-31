@@ -43,6 +43,10 @@ API will have the following endpoints. Updating exising feedbacks and tags will 
             <td><b>created_by</b></td>
             <td>string</td>
         </tr>
+        <tr>
+            <td><b>created_at</b></td>
+            <td>timestamptz</td>
+        </tr>
     </table>
 </td>
 
