@@ -16,12 +16,10 @@ type TagRepository struct {
 
 // CreateMany persists new Tags into the database
 func (r *TagRepository) CreateMany(ctx context.Context, tags []domain.Tag) ([]domain.Tag, error) {
-	q := r.storage.SB.Insert("tags")
+	q := r.storage.SB.Insert("tags").Columns("name")
 
 	for _, tag := range tags {
-		q = q.SetMap(map[string]interface{}{
-			"name": tag.Name,
-		})
+		q = q.Values(tag.Name)
 	}
 	q = q.Suffix("RETURNING id, name")
 
