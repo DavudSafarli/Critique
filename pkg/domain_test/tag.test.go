@@ -11,6 +11,7 @@ import (
 
 // TestTagRepositoryBehaviour does what its name says
 func TestTagRepositoryBehaviour(t *testing.T, abstractRepo domain.TagRepository, cleanupFunc func() error) {
+	t.Parallel()
 	t.Run("CreateMany and Get", func(t *testing.T) {
 		t.Cleanup(util.CreateCleanupWrapper(t, cleanupFunc))
 		insertedTags := []domain.Tag{
