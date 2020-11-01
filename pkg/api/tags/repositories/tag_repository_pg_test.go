@@ -1,6 +1,7 @@
 package repositories
 
 import (
+	"context"
 	"testing"
 
 	"github.com/DavudSafarli/Critique/pkg/database/postgres"
@@ -23,5 +24,22 @@ func TestRepository(t *testing.T) {
 	repo := &TagRepository{
 		storage: storage,
 	}
-	domain_test.TestTagRepositoryBehaviour(t, repo)
+
+	domain_test.TestTagRepositoryBehaviour(t, repo, GetCleanupFuncForTags(storage))
+}
+
+func GetCleanupFuncForTags(storage *postgres.Storage) func() error {
+	return func() error {
+		q := storage.SB.Delete("tags")
+
+		sql, args, err := q.ToSql()
+		if err != nil {
+			return err
+		}
+		_, err = storage.DB.Exec(context.Background(), sql, args...)
+		if err != nil {
+			return err
+		}
+		return nil
+	}
 }

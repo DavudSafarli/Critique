@@ -127,3 +127,17 @@ func MigrateDatabase(t *testing.T, pgURL string) {
 	defer m.Close()
 	t.Log("Successfully migrated the database")
 }
+
+// CreateCleanupWrapper returns a function to be passed to t.Cleanup() function
+//
+// example usage:
+//
+// t.Cleanup(util.CreateCleanupWrapper(t, cleanupFunc))
+func CreateCleanupWrapper(t *testing.T, cleanupFunc func() error) func() {
+	return func() {
+		err := cleanupFunc()
+		if err != nil {
+			t.Errorf("error in cleanup function for %s: %s", t.Name(), err)
+		}
+	}
+}

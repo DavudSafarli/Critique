@@ -6,14 +6,22 @@ import (
 	"testing"
 
 	"github.com/DavudSafarli/Critique/pkg/domain"
+	"github.com/DavudSafarli/Critique/pkg/util"
 )
 
 // TestTagRepositoryBehaviour does what its name says
-func TestTagRepositoryBehaviour(t *testing.T, abstractRepo domain.TagRepository) {
+func TestTagRepositoryBehaviour(t *testing.T, abstractRepo domain.TagRepository, cleanupFunc func() error) {
 	t.Run("CreateMany and Get", func(t *testing.T) {
+		t.Cleanup(util.CreateCleanupWrapper(t, cleanupFunc))
 		insertedTags := []domain.Tag{
 			{
-				Name: "NewTagName",
+				Name: "NewTagName1",
+			},
+			{
+				Name: "NewTagName2",
+			},
+			{
+				Name: "NewTagName3",
 			},
 		}
 		numOfInsertedRows := len(insertedTags)
@@ -21,9 +29,6 @@ func TestTagRepositoryBehaviour(t *testing.T, abstractRepo domain.TagRepository)
 		t.Cleanup(cancel)
 
 		insertedTags, err := abstractRepo.CreateMany(ctx, insertedTags)
-		t.Cleanup(func() {
-			abstractRepo.RemoveAll(ctx)
-		})
 		if err != nil {
 			t.Fatalf("TagRepository.CreateMany: Failed to add Tags: %s", err)
 		}
@@ -40,6 +45,7 @@ func TestTagRepositoryBehaviour(t *testing.T, abstractRepo domain.TagRepository)
 	})
 
 	t.Run("RemoveMany", func(t *testing.T) {
+		t.Cleanup(util.CreateCleanupWrapper(t, cleanupFunc))
 		// arrange
 		insertedTags := []domain.Tag{
 			{Name: "NewTagName1"},

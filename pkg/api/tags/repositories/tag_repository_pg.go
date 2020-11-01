@@ -87,18 +87,3 @@ func (r *TagRepository) RemoveMany(ctx context.Context, tagIDs []uint) error {
 	}
 	return nil
 }
-
-// RemoveAll removes Tags of given tagIDs from database
-func (r *TagRepository) RemoveAll(ctx context.Context) error {
-	q := r.storage.SB.Delete("tags")
-
-	sql, args, err := q.ToSql()
-	if err != nil {
-		return err
-	}
-	_, err = r.storage.DB.Exec(ctx, sql, args...)
-	if err != nil {
-		return err
-	}
-	return nil
-}

@@ -13,5 +13,4 @@ type TagRepository interface {
 	CreateMany(ctx context.Context, tags []Tag) ([]Tag, error)
 	Get(ctx context.Context) ([]Tag, error)
 	RemoveMany(ctx context.Context, tagIDs []uint) error
-	RemoveAll(ctx context.Context) error
 }
