@@ -1,4 +1,4 @@
-package domain_test
+package abstract
 
 import (
 	"context"
@@ -8,13 +8,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/DavudSafarli/Critique/pkg/util"
-
-	"github.com/DavudSafarli/Critique/pkg/domain"
+	"github.com/DavudSafarli/Critique/domain/models"
+	"github.com/DavudSafarli/Critique/util"
 )
 
 // TestFeedbackRepositoryBehaviour does what its name says
-func TestFeedbackRepositoryBehaviour(t *testing.T, abstractRepo domain.FeedbackRepository, cleanupFunc func() error) {
+func TestFeedbackRepositoryBehaviour(t *testing.T, abstractRepo FeedbackRepository, cleanupFunc func() error) {
 	t.Parallel()
 	t.Run("Test Create", func(t *testing.T) {
 		t.Cleanup(util.CreateCleanupWrapper(t, cleanupFunc))
@@ -35,7 +34,7 @@ func TestFeedbackRepositoryBehaviour(t *testing.T, abstractRepo domain.FeedbackR
 }
 
 // TestCreate does what its name says
-func TestCreate(t *testing.T, abstractRepo domain.FeedbackRepository) {
+func TestCreate(t *testing.T, abstractRepo FeedbackRepository) {
 	ctx, cancel := context.WithCancel(context.Background())
 	t.Cleanup(cancel)
 
@@ -53,7 +52,7 @@ func TestCreate(t *testing.T, abstractRepo domain.FeedbackRepository) {
 }
 
 // TestGetPaginated does what its name says
-func TestGetPaginated(t *testing.T, abstractRepo domain.FeedbackRepository) {
+func TestGetPaginated(t *testing.T, abstractRepo FeedbackRepository) {
 	ctx, cancel := context.WithCancel(context.Background())
 	t.Cleanup(cancel)
 
@@ -79,7 +78,7 @@ func TestGetPaginated(t *testing.T, abstractRepo domain.FeedbackRepository) {
 }
 
 // TestFind does what its name says
-func TestFind(t *testing.T, abstractRepo domain.FeedbackRepository) {
+func TestFind(t *testing.T, abstractRepo FeedbackRepository) {
 	ctx, cancel := context.WithCancel(context.Background())
 	t.Cleanup(cancel)
 
@@ -98,15 +97,15 @@ func TestFind(t *testing.T, abstractRepo domain.FeedbackRepository) {
 }
 
 // TestUpdateTagIDs does what its name says
-func TestUpdateTagIDs(t *testing.T, abstractRepo domain.FeedbackRepository) {
+func TestUpdateTagIDs(t *testing.T, abstractRepo FeedbackRepository) {
 	// This is not required right now
 }
 
-func insertNFeedbacks(ctx context.Context, t *testing.T, n int, abstractRepo domain.FeedbackRepository) []domain.Feedback {
+func insertNFeedbacks(ctx context.Context, t *testing.T, n int, abstractRepo FeedbackRepository) []models.Feedback {
 	t.Helper()
-	insertedFeedbacks := make([]domain.Feedback, 0, n)
+	insertedFeedbacks := make([]models.Feedback, 0, n)
 	for i := 0; i < n; i++ {
-		feedback, err := abstractRepo.Create(ctx, domain.Feedback{
+		feedback, err := abstractRepo.Create(ctx, models.Feedback{
 			Title:     fmt.Sprint("Title", i),
 			Body:      fmt.Sprint("Body", i),
 			CreatedBy: "uniqueUserIdentifier",

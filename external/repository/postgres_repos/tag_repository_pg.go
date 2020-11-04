@@ -1,21 +1,29 @@
-package repositories
+package postgres_repos
 
 import (
 	"context"
 
-	sq "github.com/Masterminds/squirrel"
+	"github.com/DavudSafarli/Critique/domain/models"
 
-	"github.com/DavudSafarli/Critique/pkg/database/postgres"
-	"github.com/DavudSafarli/Critique/pkg/domain"
+	sq "github.com/Masterminds/squirrel"
 )
 
 // TagRepository is TagRepository
 type TagRepository struct {
-	storage *postgres.Storage
+	storage *Storage
+}
+
+// NewPGTagRepository ..
+func NewPGTagRepository(connstr string) TagRepository {
+	storage, err := NewDbConnection(connstr)
+	if err != nil {
+		panic("db could not be initialized")
+	}
+	return TagRepository{storage: storage}
 }
 
 // CreateMany persists new Tags into the database
-func (r *TagRepository) CreateMany(ctx context.Context, tags []domain.Tag) ([]domain.Tag, error) {
+func (r TagRepository) CreateMany(ctx context.Context, tags []models.Tag) ([]models.Tag, error) {
 	q := r.storage.SB.Insert("tags").Columns("name")
 
 	for _, tag := range tags {
@@ -30,9 +38,9 @@ func (r *TagRepository) CreateMany(ctx context.Context, tags []domain.Tag) ([]do
 
 	rows, err := r.storage.DB.Query(ctx, sql, args...)
 
-	got := []domain.Tag{}
+	got := []models.Tag{}
 	for rows.Next() {
-		var r domain.Tag
+		var r models.Tag
 		err = rows.Scan(&r.ID, &r.Name)
 		if err != nil {
 			return nil, err
@@ -44,7 +52,7 @@ func (r *TagRepository) CreateMany(ctx context.Context, tags []domain.Tag) ([]do
 }
 
 // Get returns all Tags
-func (r *TagRepository) Get(ctx context.Context) ([]domain.Tag, error) {
+func (r TagRepository) Get(ctx context.Context) ([]models.Tag, error) {
 	q := r.storage.SB.Select("*").From("tags")
 
 	sql, args, err := q.ToSql()
@@ -57,9 +65,9 @@ func (r *TagRepository) Get(ctx context.Context) ([]domain.Tag, error) {
 		return nil, err
 	}
 
-	got := []domain.Tag{}
+	got := []models.Tag{}
 	for rows.Next() {
-		var r domain.Tag
+		var r models.Tag
 		err = rows.Scan(&r.ID, &r.Name)
 		if err != nil {
 			return nil, err
@@ -71,7 +79,7 @@ func (r *TagRepository) Get(ctx context.Context) ([]domain.Tag, error) {
 }
 
 // RemoveMany removes Tags of given tagIDs from database
-func (r *TagRepository) RemoveMany(ctx context.Context, tagIDs []uint) error {
+func (r TagRepository) RemoveMany(ctx context.Context, tagIDs []uint) error {
 	q := r.storage.SB.Delete("tags")
 
 	q = q.Where(sq.Eq{"tags.id": tagIDs})
