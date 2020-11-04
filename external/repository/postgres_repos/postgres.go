@@ -1,4 +1,4 @@
-package postgres
+package postgres_repos
 
 import (
 	"context"
@@ -29,15 +29,24 @@ type Storage struct {
 // And use connection string below, to connect to postgres database:
 //
 // postgres://admin:critiquesecretpassword@localhost/critique?sslmode=disable
-func NewDbConnection(connStr string) (*Storage, error) {
-	poolConfig, err := pgxpool.ParseConfig(connStr)
-	pool, err := pgxpool.ConnectConfig(context.Background(), poolConfig)
-	if err != nil {
-		log.Fatal("Unable to create connection pool", "error", err)
-	}
+var NewDbConnection = (func() func(connStr string) (*Storage, error) {
+	var storageInstance *Storage = nil
 
-	return &Storage{
-		DB: pool,
-		SB: squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar),
-	}, nil
-}
+	return func(connStr string) (*Storage, error) {
+		if storageInstance != nil {
+			return storageInstance, nil
+		}
+
+		poolConfig, err := pgxpool.ParseConfig(connStr)
+		pool, err := pgxpool.ConnectConfig(context.Background(), poolConfig)
+		if err != nil {
+			log.Fatal("Unable to create connection pool", "error", err)
+		}
+
+		storageInstance = &Storage{
+			DB: pool,
+			SB: squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar),
+		}
+		return storageInstance, nil
+	}
+})()

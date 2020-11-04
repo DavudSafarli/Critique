@@ -14,11 +14,6 @@ func GetDockerHost() string {
 	}
 }
 
-// CreateCleanupWrapper returns a function to be passed to t.Cleanup() function
-//
-// example usage:
-//
-// t.Cleanup(util.CreateCleanupWrapper(t, cleanupFunc))
 func CreateCleanupWrapper(t *testing.T, cleanupFunc func() error) func() {
 	return func() {
 		err := cleanupFunc()

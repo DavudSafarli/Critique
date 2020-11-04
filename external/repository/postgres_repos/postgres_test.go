@@ -1,4 +1,4 @@
-package util
+package postgres_repos
 
 import (
 	"database/sql"
@@ -11,7 +11,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/DavudSafarli/Critique/pkg/database/postgres"
+	"github.com/DavudSafarli/Critique/util"
+
 	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
@@ -24,17 +25,17 @@ import (
 var storageOncer sync.Once
 
 // dockerPool what it is
-var storage *postgres.Storage
+var storage *Storage
 
 // dockerErr is what it is
 var storageErr error
 
 // CreatePostgresStorage runs a new docker container, runs migrations and returns connection string of that postgres instance
-func CreatePostgresStorage(t *testing.T) *postgres.Storage {
+func CreatePostgresStorage(t *testing.T) *Storage {
 	t.Helper()
 	storageOncer.Do(func() {
 		pgConnectionString := RunPostgresDockerAndGetConnectionString(t)
-		storage, storageErr = postgres.NewDbConnection(pgConnectionString)
+		storage, storageErr = NewDbConnection(pgConnectionString)
 		if storageErr != nil {
 			t.Fatalf("Failed to create a new Storage: %s", storageErr)
 		}
@@ -59,7 +60,7 @@ func RunPostgresDockerAndGetConnectionString(t *testing.T) string {
 	var pool *dockertest.Pool
 	var err error
 
-	pool, err = dockertest.NewPool(GetDockerHost())
+	pool, err = dockertest.NewPool(util.GetDockerHost())
 	if err != nil {
 		t.Fatalf("Could not connect to docker: %v", err)
 	}
