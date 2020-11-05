@@ -2,6 +2,7 @@ package impl
 
 import (
 	"context"
+	"errors"
 
 	"github.com/DavudSafarli/Critique/external/repository/abstract"
 
@@ -41,6 +42,12 @@ func (g fi) GetFeedbackDetails(ctx context.Context, id uint) (models.Feedback, e
 	return g.feedbackRepository.Find(ctx, id)
 }
 
+var errZeroLimitPagination error = errors.New("Pagination limit is zero")
+
 func (g fi) GetFeedbacksWithPagination(ctx context.Context, pagination feedback_usecases.Pagination) ([]models.Feedback, error) {
+	if pagination.Limit == 0 {
+		return nil, errZeroLimitPagination
+	}
+
 	return g.feedbackRepository.GetPaginated(ctx, pagination.Skip, pagination.Limit)
 }

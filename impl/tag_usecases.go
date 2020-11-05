@@ -2,6 +2,7 @@ package impl
 
 import (
 	"context"
+	"errors"
 
 	"github.com/DavudSafarli/Critique/external/repository/abstract"
 
@@ -19,7 +20,12 @@ func (t ti) GetTags(ctx context.Context) ([]models.Tag, error) {
 	return t.tagRepository.Get(ctx)
 }
 
+var errEmptySlice error = errors.New("Passed TagIds is empty")
+
 func (t ti) DeleteTags(ctx context.Context, tagIds []uint) error {
+	if len(tagIds) == 0 {
+		return errEmptySlice
+	}
 	return t.tagRepository.RemoveMany(ctx, tagIds)
 }
 
