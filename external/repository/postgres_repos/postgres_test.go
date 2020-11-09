@@ -3,11 +3,12 @@ package postgres_repos
 import (
 	"database/sql"
 	"fmt"
+	"github.com/pkg/errors"
 	"log"
 	"net"
 	"net/url"
+	"os"
 	"runtime"
-	"sync"
 	"testing"
 	"time"
 
@@ -21,104 +22,110 @@ import (
 	"github.com/ory/dockertest/v3/docker"
 )
 
-// newDockerPoolOncer is a "Once object" to be used for  dockertest.NewPool function
-var storageOncer sync.Once
+type globalVars struct {
+	storage *Storage
+	storageErr error
 
-// dockerPool what it is
-var storage *Storage
-
-// dockerErr is what it is
-var storageErr error
-
-// CreatePostgresStorage runs a new docker container, runs migrations and returns connection string of that postgres instance
-func CreatePostgresStorage(t *testing.T) *Storage {
-	t.Helper()
-	storageOncer.Do(func() {
-		pgConnectionString := RunPostgresDockerAndGetConnectionString(t)
-		storage, storageErr = NewDbConnection(pgConnectionString)
-		if storageErr != nil {
-			t.Fatalf("Failed to create a new Storage: %s", storageErr)
-		}
-		MigrateDatabase(t, pgConnectionString)
-	})
-	if storageErr != nil {
-		t.Fatalf("Failed to create a new Storage: %s", storageErr)
-	}
-	return storage
+	pool *dockertest.Pool
+	resource *dockertest.Resource
+	logWaiter docker.CloseWaiter
 }
-
-// RunPostgresDockerAndGetConnectionString does what its name says
-func RunPostgresDockerAndGetConnectionString(t *testing.T) string {
-	t.Helper()
-
-	pgURL := &url.URL{
+var vars = &globalVars{}
+func TestMain(m *testing.M) {
+	vars.initStorage()
+	defer vars.cleanup()
+	code := m.Run()
+	os.Exit(code)
+}
+func panicOnErr(err error) {
+	if err != nil {
+		panic(err)
+	}
+}
+func (v *globalVars) getPGScheme() *url.URL {
+	return &url.URL{
 		Scheme:   "postgres",
 		User:     url.UserPassword("myuser", "mypass"),
 		Path:     "mydatabase",
 		RawQuery: "sslmode=disable",
 	}
-	var pool *dockertest.Pool
-	var err error
-
-	pool, err = dockertest.NewPool(util.GetDockerHost())
-	if err != nil {
-		t.Fatalf("Could not connect to docker: %v", err)
-	}
-
-	pw, _ := pgURL.User.Password()
-	env := []string{
-		"POSTGRES_USER=" + pgURL.User.Username(),
+}
+func (v *globalVars) getContainerEnvVars() []string {
+	scheme := v.getPGScheme()
+	pw, _ := scheme.User.Password()
+	return []string{
+		"POSTGRES_USER=" + scheme.User.Username(),
 		"POSTGRES_PASSWORD=" + pw,
-		"POSTGRES_DB=" + pgURL.Path,
+		"POSTGRES_DB=" + scheme.Path,
 	}
-
-	resource, err := pool.Run("postgres", "latest", env)
-	if err != nil {
-		t.Fatalf("Could not start postgres container: %v", err)
-	}
-	t.Cleanup(func() {
-		err = pool.Purge(resource)
-		if err != nil {
-			t.Fatalf("Could not purge container: %v", err)
-		}
-	})
-
-	pgURL.Host = fmt.Sprintf("localhost:%s", resource.GetPort("5432/tcp"))
-	pgConnectionString := pgURL.String()
+}
+func (v *globalVars) getConnStr() string {
+	scheme := v.getPGScheme()
+	scheme.Host = fmt.Sprintf("localhost:%s", v.resource.GetPort("5432/tcp"))
 
 	// Docker layer network is different on Mac
 	if runtime.GOOS == "darwin" {
-		pgURL.Host = net.JoinHostPort(resource.GetBoundIP("5432/tcp"), resource.GetPort("5432/tcp"))
+		scheme.Host = net.JoinHostPort(v.resource.GetBoundIP("5432/tcp"), v.resource.GetPort("5432/tcp"))
 	}
+	return scheme.String()
+}
+// initStorage runs a new docker container, runs migrations and returns connection string of that postgres instance
+func (v *globalVars) initStorage() {
+	v.RunPostgresDocker()
 
-	logWaiter, err := pool.Client.AttachToContainerNonBlocking(docker.AttachToContainerOptions{
-		Container: resource.Container.ID,
+	connStr := v.getConnStr()
+	v.storage, v.storageErr = NewDbConnection(connStr)
+	if v.storageErr != nil {
+		panic(errors.Wrap(v.storageErr,"Failed to create a new Storage"))
+	}
+	// migrate
+	migrationsFolder := "file://D:/GO/GOPATH/go/src/github.com/DavudSafarli/Critique/scripts/db/migrations"
+	m, err := migrate.New(migrationsFolder, connStr)
+	if err != nil {
+		panic(err)
+	}
+	// Migrate all the way up ...
+	if err := m.Up(); err != nil && err != migrate.ErrNoChange {
+		panic(err)
+	}
+	defer m.Close()
+}
+func (v *globalVars) cleanup() {
+	err := v.pool.Purge(v.resource)
+	panicOnErr(err)
+	err = v.logWaiter.Close()
+	panicOnErr(err)
+	err = v.logWaiter.Wait()
+	panicOnErr(err)
+}
+
+
+// RunPostgresDockerAndGetConnectionString does what its name says
+func (v *globalVars) RunPostgresDocker() {
+	var err error
+
+	v.pool, err = dockertest.NewPool(util.GetDockerHost())
+	panicOnErr(err)
+
+	v.resource, err = v.pool.Run("postgres", "latest", v.getContainerEnvVars())
+	panicOnErr(err)
+
+	v.logWaiter, err = v.pool.Client.AttachToContainerNonBlocking(docker.AttachToContainerOptions{
+		Container: v.resource.Container.ID,
 		//OutputStream: log.Writer(),
 		ErrorStream: log.Writer(),
 		Stderr:      true,
 		//Stdout:       true,
 		//Stream:       true,
 	})
-	if err != nil {
-		t.Fatalf("Could not connect to postgres container log output: %v", err)
-	}
+	panicOnErr(err)
 
-	t.Cleanup(func() {
-		err = logWaiter.Close()
-		if err != nil {
-			t.Fatalf("Could not close container log: %v", err)
-		}
-		err = logWaiter.Wait()
-		if err != nil {
-			t.Fatalf("Could not wait for container log to close: %v", err)
-		}
-	})
-
-	pool.MaxWait = 8 * time.Second
-	err = pool.Retry(func() (err error) {
-		db, err := sql.Open("pgx", pgConnectionString)
-		if err != nil {
-			return err
+	v.pool.MaxWait = 8 * time.Second
+	err = v.pool.Retry(func() (err error) {
+		a := v.getConnStr()
+		db, e := sql.Open("pgx", a)
+		if e != nil {
+			return e
 		}
 		defer func() {
 			cerr := db.Close()
@@ -128,24 +135,6 @@ func RunPostgresDockerAndGetConnectionString(t *testing.T) string {
 		}()
 		return db.Ping()
 	})
-	if err != nil {
-		t.Fatalf("Could not connect to postgres container: %v", err)
-	}
-
-	return pgConnectionString
+	panicOnErr(err)
 }
 
-// MigrateDatabase migrates database all the way up
-func MigrateDatabase(t *testing.T, pgURL string) {
-	migrationsFolder := "file://D:/GO/GOPATH/go/src/github.com/DavudSafarli/Critique/scripts/db/migrations"
-	m, err := migrate.New(migrationsFolder, pgURL)
-	if err != nil {
-		t.Fatalf("Cannot run migrations %v", err)
-	}
-	// Migrate all the way up ...
-	if err := m.Up(); err != nil && err != migrate.ErrNoChange {
-		t.Fatal(err)
-	}
-	defer m.Close()
-	t.Log("Successfully migrated the database")
-}

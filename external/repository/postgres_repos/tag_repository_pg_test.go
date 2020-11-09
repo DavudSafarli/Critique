@@ -8,10 +8,8 @@ import (
 )
 
 func TestTagRepository(t *testing.T) {
-	storage := CreatePostgresStorage(t)
-	repo := &TagRepository{
-		storage: storage,
-	}
+	storage := vars.storage
+	repo := &TagRepository{storage}
 
 	abstract.TestTagRepositoryBehaviour(t, repo, GetCleanupFuncForTags(storage))
 }

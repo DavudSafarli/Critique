@@ -8,10 +8,8 @@ import (
 )
 
 func TestFeedbackRepository(t *testing.T) {
-	storage := CreatePostgresStorage(t)
-	repo := &FeedbackRepository{
-		storage: storage,
-	}
+	storage := vars.storage
+	repo := &FeedbackRepository{storage}
 
 	abstract.TestFeedbackRepositoryBehaviour(t, repo, GetCleanupFuncForFeedbacks(storage))
 }

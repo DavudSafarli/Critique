@@ -23,9 +23,10 @@ func (m *MockFeedbackValidator) Validate(feedback models.Feedback) error {
 
 func getFeedbackMocksAndUsecase(t *testing.T) (FeedbackUsecasesImpl, *mocks.MockFeedbackRepository, *MockFeedbackValidator) {
 	t.Helper()
-	mockValidator := new(MockFeedbackValidator)
 	mockRepo := new(mocks.MockFeedbackRepository)
-	usecase := FeedbackUsecasesImpl{mockRepo, mockValidator}
+	mockAttchRepo := new(mocks.MockAttachmentRepository)
+	mockValidator := new(MockFeedbackValidator)
+	usecase := FeedbackUsecasesImpl{mockRepo, mockAttchRepo, mockValidator}
 	return usecase, mockRepo, mockValidator
 }
 func TestCreateFeedback(t *testing.T) {
@@ -34,7 +35,7 @@ func TestCreateFeedback(t *testing.T) {
 		// arrange
 		usecase, mockRepo, mockValidator := getFeedbackMocksAndUsecase(t)
 		mockValidator.On("Validate", mock.Anything).Return(nil)
-		mockRepo.On("Create", mock.Anything, mock.Anything).Return(models.Feedback{},nil)
+		mockRepo.On("Create", mock.Anything, mock.Anything).Return(models.Feedback{}, nil)
 
 		// act
 		f := models.Feedback{Title: "Salam"}
@@ -89,7 +90,7 @@ func TestGetFeedbacksWithPagination(t *testing.T) {
 		feedbacks, err := usecase.GetFeedbacksWithPagination(context.Background(), pagination)
 
 		// assert
-		assert.Equal(t, errZeroLimitPagination, err, "Should return non-nil error when limit is 0")
+		assert.Equal(t, ZeroLimitPaginationErr, err, "Should return non-nil error when limit is 0")
 		assert.Equal(t, 0, len(feedbacks), "Should return nil(0-length) slice when pagination limit is 0")
 	})
 }

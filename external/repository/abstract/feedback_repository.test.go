@@ -14,7 +14,6 @@ import (
 
 // TestFeedbackRepositoryBehaviour does what its name says
 func TestFeedbackRepositoryBehaviour(t *testing.T, abstractRepo FeedbackRepository, cleanupFunc func() error) {
-	t.Parallel()
 	t.Run("Test Create", func(t *testing.T) {
 		t.Cleanup(util.CreateCleanupWrapper(t, cleanupFunc))
 		TestCreate(t, abstractRepo)
