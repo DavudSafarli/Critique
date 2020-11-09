@@ -2,6 +2,7 @@ package mocks
 
 import (
 	"context"
+
 	"github.com/DavudSafarli/Critique/domain/models"
 	"github.com/stretchr/testify/mock"
 )
@@ -9,6 +10,7 @@ import (
 // TagRepository is an interfce
 type MockTagRepository struct {
 	mock.Mock
+	MockTX
 }
 
 func (m *MockTagRepository) CreateMany(ctx context.Context, tags []models.Tag) ([]models.Tag, error) {
@@ -25,4 +27,3 @@ func (m *MockTagRepository) RemoveMany(ctx context.Context, tagIDs []uint) error
 	args := m.Called(ctx, tagIDs)
 	return args.Error(1)
 }
-

@@ -8,6 +8,7 @@ import (
 
 // TagRepository is an interfce
 type TagRepository interface {
+	OnePhaseCommitProtocol
 	// CreateMany persists new Tags into the database
 	CreateMany(ctx context.Context, tags []models.Tag) ([]models.Tag, error)
 	// Get returns all Tags

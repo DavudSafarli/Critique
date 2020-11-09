@@ -8,6 +8,7 @@ import (
 
 // FeedbackRepository is an interfce
 type FeedbackRepository interface {
+	OnePhaseCommitProtocol
 	// GetPaginated returns records with pagination
 	GetPaginated(ctx context.Context, skip uint, limit uint) ([]models.Feedback, error)
 	// Find finds and retrieves a single record with the given ID

@@ -10,6 +10,7 @@ import (
 // MockFeedbackRepository is a mock
 type MockFeedbackRepository struct {
 	mock.Mock
+	MockTX
 }
 
 // GetPaginated is a mock

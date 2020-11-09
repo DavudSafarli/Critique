@@ -10,7 +10,7 @@ import (
 
 // TagRepository is TagRepository
 type TagRepository struct {
-	storage *Storage
+	*Storage
 }
 
 // NewPGTagRepository ..
@@ -19,12 +19,12 @@ func NewPGTagRepository(connstr string) TagRepository {
 	if err != nil {
 		panic("db could not be initialized")
 	}
-	return TagRepository{storage: storage}
+	return TagRepository{storage}
 }
 
 // CreateMany persists new Tags into the database
 func (r TagRepository) CreateMany(ctx context.Context, tags []models.Tag) ([]models.Tag, error) {
-	q := r.storage.SB.Insert("tags").Columns("name")
+	q := r.SB.Insert("tags").Columns("name")
 
 	for _, tag := range tags {
 		q = q.Values(tag.Name)
@@ -36,7 +36,7 @@ func (r TagRepository) CreateMany(ctx context.Context, tags []models.Tag) ([]mod
 		return nil, err
 	}
 
-	rows, err := r.storage.DB.Query(ctx, sql, args...)
+	rows, err := r.DB.Query(ctx, sql, args...)
 
 	got := []models.Tag{}
 	for rows.Next() {
@@ -53,14 +53,14 @@ func (r TagRepository) CreateMany(ctx context.Context, tags []models.Tag) ([]mod
 
 // Get returns all Tags
 func (r TagRepository) Get(ctx context.Context) ([]models.Tag, error) {
-	q := r.storage.SB.Select("*").From("tags")
+	q := r.SB.Select("*").From("tags")
 
 	sql, args, err := q.ToSql()
 	if err != nil {
 		return nil, err
 	}
 
-	rows, err := r.storage.DB.Query(ctx, sql, args...)
+	rows, err := r.DB.Query(ctx, sql, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -80,14 +80,14 @@ func (r TagRepository) Get(ctx context.Context) ([]models.Tag, error) {
 
 // RemoveMany removes Tags of given tagIDs from database
 func (r TagRepository) RemoveMany(ctx context.Context, tagIDs []uint) error {
-	q := r.storage.SB.Delete("tags")
+	q := r.SB.Delete("tags")
 
 	q = q.Where(sq.Eq{"tags.id": tagIDs})
 	sql, args, err := q.ToSql()
 	if err != nil {
 		return err
 	}
-	_, err = r.storage.DB.Exec(ctx, sql, args...)
+	_, err = r.DB.Exec(ctx, sql, args...)
 	if err != nil {
 		return err
 	}

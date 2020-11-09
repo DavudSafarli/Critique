@@ -10,7 +10,7 @@ import (
 
 // FeedbackRepository is FeedbackRepository
 type FeedbackRepository struct {
-	storage *Storage
+	*Storage
 }
 
 // NewPGFeedbackRepository ..
@@ -19,12 +19,12 @@ func NewPGFeedbackRepository(connstr string) FeedbackRepository {
 	if err != nil {
 		panic("db could not be initialized")
 	}
-	return FeedbackRepository{storage: storage}
+	return FeedbackRepository{storage}
 }
 
 // GetPaginated returns records with pagination
 func (r FeedbackRepository) GetPaginated(ctx context.Context, skip uint, limit uint) ([]models.Feedback, error) {
-	q := r.storage.SB.
+	q := r.SB.
 		Select("id", "title", "body", "created_by", "extract(epoch from created_at) created_at").
 		From("feedbacks").
 		Offset(uint64(skip)).
@@ -35,7 +35,7 @@ func (r FeedbackRepository) GetPaginated(ctx context.Context, skip uint, limit u
 		return nil, err
 	}
 
-	rows, err := r.storage.DB.Query(ctx, sql, args...)
+	rows, err := r.DB.Query(ctx, sql, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -55,7 +55,7 @@ func (r FeedbackRepository) GetPaginated(ctx context.Context, skip uint, limit u
 
 // Find finds and retrieves a single record with the given ID
 func (r FeedbackRepository) Find(ctx context.Context, id uint) (f models.Feedback, err error) {
-	q := r.storage.SB.
+	q := r.SB.
 		Select("id", "title", "body", "created_by", "extract(epoch from created_at) created_at").
 		From("feedbacks").
 		Where(sq.Eq{"id": id})
@@ -65,7 +65,7 @@ func (r FeedbackRepository) Find(ctx context.Context, id uint) (f models.Feedbac
 		return f, err
 	}
 
-	err = r.storage.DB.QueryRow(ctx, sql, args...).
+	err = r.DB.QueryRow(ctx, sql, args...).
 		Scan(&f.ID, &f.Title, &f.Body, &f.CreatedBy, &f.CreatedAt)
 
 	return f, err
@@ -73,7 +73,7 @@ func (r FeedbackRepository) Find(ctx context.Context, id uint) (f models.Feedbac
 
 // Create persists a new Feedback to the database and returns newly inserted Feedback
 func (r FeedbackRepository) Create(ctx context.Context, feedback models.Feedback) (f models.Feedback, err error) {
-	q := r.storage.SB.Insert("feedbacks").
+	q := r.SB.Insert("feedbacks").
 		Columns("title", "body", "created_by", "created_at").
 		SetMap(map[string]interface{}{
 			"title":      feedback.Title,
@@ -89,7 +89,7 @@ func (r FeedbackRepository) Create(ctx context.Context, feedback models.Feedback
 		return f, err
 	}
 
-	err = r.storage.DB.QueryRow(ctx, sql, args...).
+	err = r.DB.QueryRow(ctx, sql, args...).
 		Scan(&f.ID, &f.Title, &f.Body, &f.CreatedBy, &f.CreatedAt)
 
 	return f, err
