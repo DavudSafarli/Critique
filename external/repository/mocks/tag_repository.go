@@ -10,7 +10,7 @@ import (
 // TagRepository is an interfce
 type MockTagRepository struct {
 	mock.Mock
-	MockTX
+	*MockTX
 }
 
 func (m *MockTagRepository) CreateMany(ctx context.Context, tags []models.Tag) ([]models.Tag, error) {

@@ -14,6 +14,14 @@ func NewFeedbackRepository(driver string, connstr string) abstract.FeedbackRepos
 	panic("NewFeedbackRepository not implemented for driver: " + driver)
 }
 
+func NewAttachmentRepository(driver string, connstr string) abstract.AttachmentRepository {
+	switch driver {
+	case "pg":
+		return postgres_repos.NewPGAttachmentRepository(connstr)
+	}
+	panic("NewFeedbackRepository not implemented for driver: " + driver)
+}
+
 // NewTagRepository creates new TagRepository
 func NewTagRepository(driver string, connstr string) abstract.TagRepository {
 	switch driver {
