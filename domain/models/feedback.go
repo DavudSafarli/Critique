@@ -11,6 +11,8 @@ type Feedback struct {
 	Body      string `json:"body,omitempty"`
 	CreatedBy string `json:"created_by,omitempty"`
 	CreatedAt uint   `json:"created_at,omitempty"`
+
+	Attachments []Attachment `json:"attachments,omitempty"`
 }
 
 type StandardError string
