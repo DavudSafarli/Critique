@@ -15,7 +15,7 @@ type FeedbackRepository struct {
 
 // NewPGFeedbackRepository ..
 func NewPGFeedbackRepository(connstr string) FeedbackRepository {
-	storage, err := NewDbConnection(connstr)
+	storage, err := NewSingletonDbConnection(connstr)
 	if err != nil {
 		panic("db could not be initialized")
 	}
@@ -68,11 +68,30 @@ func (r FeedbackRepository) Find(ctx context.Context, id uint) (f models.Feedbac
 	err = r.DB.QueryRow(ctx, sql, args...).
 		Scan(&f.ID, &f.Title, &f.Body, &f.CreatedBy, &f.CreatedAt)
 
+	q2 := r.SB.
+		Select("id", "name", "path", "feedback_id").
+		From("attachments").
+		Where(sq.Eq{"feedback_id": id})
+
+	sql, args, err = q2.ToSql()
+	if err != nil {
+		return f, err
+	}
+	rows, err := r.DB.Query(ctx, sql, args...)
+	for rows.Next() {
+		var a models.Attachment
+		err = rows.Scan(&a.ID, &a.Name, &a.Path, &a.FeedbackID)
+		if err != nil {
+			return
+		}
+		f.Attachments = append(f.Attachments, a)
+	}
 	return f, err
 }
 
 // Create persists a new Feedback to the database and returns newly inserted Feedback
 func (r FeedbackRepository) Create(ctx context.Context, feedback models.Feedback) (f models.Feedback, err error) {
+	db := r.getDB(ctx)
 	q := r.SB.Insert("feedbacks").
 		Columns("title", "body", "created_by", "created_at").
 		SetMap(map[string]interface{}{
@@ -89,7 +108,7 @@ func (r FeedbackRepository) Create(ctx context.Context, feedback models.Feedback
 		return f, err
 	}
 
-	err = r.DB.QueryRow(ctx, sql, args...).
+	err = db.QueryRow(ctx, sql, args...).
 		Scan(&f.ID, &f.Title, &f.Body, &f.CreatedBy, &f.CreatedAt)
 
 	return f, err

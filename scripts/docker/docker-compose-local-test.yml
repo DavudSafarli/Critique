@@ -1,0 +1,17 @@
+version: "3"
+networks:
+  critique-test:
+    driver: bridge
+services:
+  local-test-db:
+    image: postgres:latest
+    # logging:
+    #   driver: none
+    environment:
+      POSTGRES_DB: critique-local-test
+      POSTGRES_USER: local-test-user
+      POSTGRES_PASSWORD: local-test-pass
+    ports:
+      - "5433:5432"
+    networks:
+      - critique-test

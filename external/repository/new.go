@@ -3,11 +3,12 @@ package repository
 import (
 	"github.com/DavudSafarli/Critique/external/repository/abstract"
 	"github.com/DavudSafarli/Critique/external/repository/postgres_repos"
+	"strings"
 )
 
 // NewFeedbackRepository ..
 func NewFeedbackRepository(driver string, connstr string) abstract.FeedbackRepository {
-	switch driver {
+	switch strings.ToLower(driver) {
 	case "pg":
 		return postgres_repos.NewPGFeedbackRepository(connstr)
 	}
@@ -15,7 +16,7 @@ func NewFeedbackRepository(driver string, connstr string) abstract.FeedbackRepos
 }
 
 func NewAttachmentRepository(driver string, connstr string) abstract.AttachmentRepository {
-	switch driver {
+	switch strings.ToLower(driver) {
 	case "pg":
 		return postgres_repos.NewPGAttachmentRepository(connstr)
 	}
@@ -24,7 +25,7 @@ func NewAttachmentRepository(driver string, connstr string) abstract.AttachmentR
 
 // NewTagRepository creates new TagRepository
 func NewTagRepository(driver string, connstr string) abstract.TagRepository {
-	switch driver {
+	switch strings.ToLower(driver) {
 	case "pg":
 		return postgres_repos.NewPGTagRepository(connstr)
 	}

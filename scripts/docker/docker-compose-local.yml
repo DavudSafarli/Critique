@@ -1,0 +1,26 @@
+version: "3"
+networks:
+  critique-test:
+    driver: bridge
+services:
+  local-db:
+    image: postgres:latest
+    logging:
+      driver: none
+    environment:
+      POSTGRES_DB: critique-local
+      POSTGRES_USER: local-user
+      POSTGRES_PASSWORD: local-pass
+    ports:
+      - "5434 :5432"
+    networks:
+      - critique-test
+#  migrate:
+#    image: migrate/migrate
+#    networks:
+#      - critique-test
+#    volumes:
+#      - .:/app
+#    command: ["-path", "/app/scripts/db/migrations", "-database",  "postgres://myuser:mypass@test-db:5432/mydatabase?sslmode=disable", "up", "3"]
+#    depends_on:
+#      - test-db

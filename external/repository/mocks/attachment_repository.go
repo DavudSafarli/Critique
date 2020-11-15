@@ -13,7 +13,7 @@ type MockAttachmentRepository struct {
 	*MockTX
 }
 
-func (m MockAttachmentRepository) CreateMany(ctx context.Context, attachments []models.Attachment) ([]models.Attachment, error) {
-	args := m.Called(ctx, attachments)
+func (m MockAttachmentRepository) CreateMany(ctx context.Context, attachments []models.Attachment, feedbackId uint) ([]models.Attachment, error) {
+	args := m.Called(ctx, attachments, feedbackId)
 	return args.Get(0).([]models.Attachment), args.Error(1)
 }

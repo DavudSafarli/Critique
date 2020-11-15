@@ -13,7 +13,7 @@ type AttachmentRepository struct {
 
 // NewPGAttachmentRepository ..
 func NewPGAttachmentRepository(connstr string) AttachmentRepository {
-	storage, err := NewDbConnection(connstr)
+	storage, err := NewSingletonDbConnection(connstr)
 	if err != nil {
 		panic("db could not be initialized")
 	}
@@ -21,11 +21,12 @@ func NewPGAttachmentRepository(connstr string) AttachmentRepository {
 }
 
 // CreateMany persists new Attachments into the database
-func (r AttachmentRepository) CreateMany(ctx context.Context, attachments []models.Attachment) ([]models.Attachment, error) {
+func (r AttachmentRepository) CreateMany(ctx context.Context, attachments []models.Attachment, feedbackId uint) ([]models.Attachment, error) {
+	db := r.getDB(ctx)
 	q := r.SB.Insert("attachments").Columns("name", "path", "feedback_id")
 
 	for _, a := range attachments {
-		q = q.Values(a.Name, a.Path, a.FeedbackID)
+		q = q.Values(a.Name, a.Path, feedbackId)
 	}
 	q = q.Suffix("RETURNING id, name, path, feedback_id")
 
@@ -34,7 +35,7 @@ func (r AttachmentRepository) CreateMany(ctx context.Context, attachments []mode
 		return nil, err
 	}
 
-	rows, err := r.DB.Query(ctx, sql, args...)
+	rows, err := db.Query(ctx, sql, args...)
 
 	if err != nil {
 		return nil, err
@@ -51,4 +52,25 @@ func (r AttachmentRepository) CreateMany(ctx context.Context, attachments []mode
 	}
 
 	return got, nil
+}
+
+func (r AttachmentRepository) GetAll(ctx context.Context) (attchs []models.Attachment, err error) {
+	q := r.SB.
+		Select("id", "name", "path", "feedback_id").
+		From("attachments")
+
+	sql, args, err := q.ToSql()
+	if err != nil {
+		return nil, err
+	}
+	rows, err := r.DB.Query(ctx, sql, args...)
+	for rows.Next() {
+		var a models.Attachment
+		err = rows.Scan(&a.ID, &a.Name, &a.Path, &a.FeedbackID)
+		if err != nil {
+			return
+		}
+		attchs = append(attchs, a)
+	}
+	return attchs, err
 }

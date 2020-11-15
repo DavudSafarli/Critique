@@ -15,7 +15,7 @@ type TagRepository struct {
 
 // NewPGTagRepository ..
 func NewPGTagRepository(connstr string) TagRepository {
-	storage, err := NewDbConnection(connstr)
+	storage, err := NewSingletonDbConnection(connstr)
 	if err != nil {
 		panic("db could not be initialized")
 	}
