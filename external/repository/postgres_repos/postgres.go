@@ -3,6 +3,7 @@ package postgres_repos
 import (
 	"context"
 	"log"
+	"sync"
 
 	"github.com/jackc/pgx/v4/pgxpool"
 
@@ -16,7 +17,9 @@ type Storage struct {
 	SB squirrel.StatementBuilderType
 }
 
-// NewDbConnection connects to the DB of passed connectionString and creates new pgxpool connection to application database
+var mx sync.Mutex
+
+// NewSingletonDbConnection connects to the DB of passed connectionString and creates new pgxpool connection to application database
 //
 // Using docker, you can run :
 //
@@ -29,12 +32,15 @@ type Storage struct {
 // And use connection string below, to connect to postgres database:
 //
 // postgres://admin:critiquesecretpassword@localhost/critique?sslmode=disable
-var NewDbConnection = (func() func(connStr string) (*Storage, error) {
-	var storageInstance *Storage = nil
+var NewSingletonDbConnection = (func() func(connStr string) (*Storage, error) {
+	mp := make(map[string]*Storage)
 
 	return func(connStr string) (*Storage, error) {
-		if storageInstance != nil {
-			return storageInstance, nil
+		mx.Lock()
+		defer mx.Unlock()
+
+		if storage, exists := mp[connStr]; exists {
+			return storage, nil
 		}
 
 		poolConfig, err := pgxpool.ParseConfig(connStr)
@@ -43,10 +49,11 @@ var NewDbConnection = (func() func(connStr string) (*Storage, error) {
 			log.Fatal("Unable to create connection pool", "error", err)
 		}
 
-		storageInstance = &Storage{
+		storage := &Storage{
 			DB: pool,
 			SB: squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar),
 		}
-		return storageInstance, nil
+		mp[connStr] = storage
+		return storage, nil
 	}
 })()

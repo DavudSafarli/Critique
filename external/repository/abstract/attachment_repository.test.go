@@ -3,31 +3,32 @@ package abstract
 import (
 	"context"
 	"fmt"
+	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
 
-	"github.com/bmizerany/assert"
-
 	"github.com/DavudSafarli/Critique/domain/models"
-
-	"github.com/DavudSafarli/Critique/util"
 )
 
 type AttchRequiredFuncs interface {
 	GetAllAttachments() ([]models.Attachment, error)
 }
 
+type AttachmentRepositoryTester interface {
+	AttachmentRepository
+	GetAll(ctx context.Context) ([]models.Attachment, error)
+}
+
 // TestAttachmentRepositoryBehaviour does what its name says
-func TestAttachmentRepositoryBehaviour(t *testing.T, abstractRepo AttachmentRepository,
-	abstractFeedbackRepo FeedbackRepository, cleanupFunc func() error, funcs AttchRequiredFuncs) {
+func TestAttachmentRepositoryBehaviour(t *testing.T, attchRepo AttachmentRepositoryTester, abstractFeedbackRepo FeedbackRepository, cleanupFunc func()) {
 	t.Run("Create attachments successfully", func(t *testing.T) {
-		t.Cleanup(util.CreateCleanupWrapper(t, cleanupFunc))
-		testCreateMany(t, abstractRepo, abstractFeedbackRepo, funcs)
+		t.Cleanup(cleanupFunc)
+		testCreateMany(t, attchRepo, abstractFeedbackRepo)
 	})
 }
 
 // TestCreate does what its name says
-func testCreateMany(t *testing.T, attchRepo AttachmentRepository, fdbkRepo FeedbackRepository, funcs AttchRequiredFuncs) {
+func testCreateMany(t *testing.T, attchRepo AttachmentRepositoryTester, fdbkRepo FeedbackRepository) {
 	// arrange
 	ctx, cancel := context.WithCancel(context.Background())
 	t.Cleanup(cancel)
@@ -49,13 +50,14 @@ func testCreateMany(t *testing.T, attchRepo AttachmentRepository, fdbkRepo Feedb
 			FeedbackID: f.ID,
 		})
 	}
-	returnedAttchs, err := attchRepo.CreateMany(ctx, attchs)
+	returnedAttchs, err := attchRepo.CreateMany(ctx, attchs, f.ID)
 	if err != nil {
 		t.Fatalf("Failed to Create-Many Attachments : %s", err)
 	}
 
 	// assert
-	attchsInDb, _ := funcs.GetAllAttachments()
+	attchsInDb, err := attchRepo.GetAll(ctx)
+	assert.Nil(t, err, "GetAll Attachments Should not return error")
 	assert.Equal(t, numOfInsertedRows, len(attchsInDb), "Database should contain the same number of rows")
 
 	assert.Equal(t, numOfInsertedRows, len(returnedAttchs), "CreateMany should return the same num. of attachments")

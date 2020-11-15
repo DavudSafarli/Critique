@@ -2,88 +2,91 @@ package impl
 
 import (
 	"context"
-	"errors"
+	"sync"
 	"testing"
+	"time"
 
 	"github.com/DavudSafarli/Critique/domain/models"
 	"github.com/DavudSafarli/Critique/domain/usecases/feedback_usecases"
-	"github.com/DavudSafarli/Critique/external/repository/mocks"
-	"github.com/bmizerany/assert"
-	"github.com/stretchr/testify/mock"
+	"github.com/DavudSafarli/Critique/external/repository"
+	"github.com/DavudSafarli/Critique/external/repository/abstract"
+	"github.com/DavudSafarli/Critique/util/testing_utils"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
-type MockFeedbackValidator struct {
-	mock.Mock
-}
+type initFuncReturnType func() (FeedbackUsecasesImpl, abstract.FeedbackRepository, abstract.AttachmentRepository)
 
-func (m *MockFeedbackValidator) Validate(feedback models.Feedback) error {
-	args := m.Called(feedback)
-	return args.Error(0)
-}
+var getVars = (func() initFuncReturnType {
+	var uc FeedbackUsecasesImpl
+	var feedbackRepo abstract.FeedbackRepository
+	var attachmentRepo abstract.AttachmentRepository
+	var oncer sync.Once
+	return func() (FeedbackUsecasesImpl, abstract.FeedbackRepository, abstract.AttachmentRepository) {
+		oncer.Do(func() {
+			driver, connstr := "pg", testing_utils.GetTestDbConnStr()
+			feedbackRepo = repository.NewFeedbackRepository(driver, connstr)
+			attachmentRepo = repository.NewAttachmentRepository(driver, connstr)
+			uc = NewFeedbackUsecasesImpl(feedbackRepo, attachmentRepo).(FeedbackUsecasesImpl)
+		})
+		return uc, feedbackRepo, attachmentRepo
+	}
+})()
 
-func getFeedbackMocksAndUsecase(t *testing.T) (FeedbackUsecasesImpl, *mocks.MockFeedbackRepository, *MockFeedbackValidator) {
-	t.Helper()
-	mockRepo := new(mocks.MockFeedbackRepository)
-	mockAttchRepo := new(mocks.MockAttachmentRepository)
-	mockValidator := new(MockFeedbackValidator)
-	usecase := FeedbackUsecasesImpl{mockRepo, mockAttchRepo, mockValidator}
-	return usecase, mockRepo, mockValidator
-}
 func TestCreateFeedback(t *testing.T) {
-	t.Run("Calls FeedbackRepo.Create on successful case", func(t *testing.T) {
-		t.Parallel()
-		// arrange
-		usecase, mockRepo, mockValidator := getFeedbackMocksAndUsecase(t)
-		mockValidator.On("Validate", mock.Anything).Return(nil)
-		mockRepo.On("Create", mock.Anything, mock.Anything).Return(models.Feedback{}, nil)
-
-		// act
-		f := models.Feedback{Title: "Salam"}
-		usecase.CreateFeedback(context.Background(), f)
-
-		// assert
-		mockRepo.AssertCalled(t, "Create", mock.Anything, mock.Anything)
+	t.Run("Should return error, Given unvalid Feedback", func(t *testing.T) {
+		t.Cleanup(testing_utils.TruncateTestTables(t, "feedbacks", "attachments"))
+		usecase, _, _ := getVars()
+		invalidFeedback := models.Feedback{Title: ""}
+		_, err := usecase.CreateFeedback(context.Background(), invalidFeedback)
+		require.Error(t, err, "Should return error on invalid feedback")
 	})
 
-	t.Run("Calls Validate and returns error on Validation fail", func(t *testing.T) {
-		t.Parallel()
+	// happy path
+	t.Run("Should create Feedback and Attachments given a valid Feedback model", func(t *testing.T) {
 		// arrange
-		returnedErr := errors.New("salam")
-		usecase, _, mockValidator := getFeedbackMocksAndUsecase(t)
-		mockValidator.On("Validate", mock.Anything).Return(returnedErr)
-
+		t.Cleanup(testing_utils.TruncateTestTables(t, "feedbacks", "attachments"))
+		usecase, _, _ := getVars()
 		// act
-		f := models.Feedback{}
-		_, err := usecase.CreateFeedback(context.Background(), f)
-
+		validInput := models.Feedback{
+			Title:     "Non empty title",
+			Body:      "",
+			CreatedBy: "",
+			CreatedAt: uint(time.Now().Unix()),
+			Attachments: []models.Attachment{
+				{Name: "bla bla2", Path: "/somewhere1"},
+				{Name: "bla bla2", Path: "/somewhere2"},
+			},
+		}
+		f, err := usecase.CreateFeedback(context.Background(), validInput)
 		// assert
-		mockValidator.AssertCalled(t, "Validate", f)
-		assert.Equal(t, returnedErr, err)
-		assert.NotEqual(t, nil, err, "Should return error if validate fails")
+		require.Nil(t, err, "Should not return error on valid input")
+		// assert models have assigned ID
+		require.NotZero(t, f.ID, "Feedback should have been assigned an ID")
+		for _, attch := range f.Attachments {
+			require.NotZero(t, attch.ID, "Attachment should have been assigned an ID")
+		}
+
+		storedFeedback, err := usecase.GetFeedbackDetails(context.Background(), f.ID)
+		require.Nil(t, err, "Should not return error on valid ID")
+		require.NotNil(t, storedFeedback, "Should not return nil Feedback on valid ID")
+		require.Equal(t, storedFeedback.Title, validInput.Title, "Should have the same title")
+		require.Equal(t, len(validInput.Attachments), len(storedFeedback.Attachments), "Should have stored all attachments/fetched all attachments")
+		for i := 0; i < len(validInput.Attachments); i++ {
+			storedAttch := storedFeedback.Attachments[i]
+			insertedAttch := validInput.Attachments[i]
+			require.Equal(t, insertedAttch.Name, storedAttch.Name, "Stored Attachment should have the same Name")
+			require.Equal(t, insertedAttch.Path, storedAttch.Path, "Stored Attachment should have the same Path")
+		}
 	})
 
-	t.Run("Calls repository on successful validation and returns repository results", func(t *testing.T) {
-		t.Parallel()
-		// arrange
-		argumentPassed := models.Feedback{}
-		usecase, mockRepo, mockValidator := getFeedbackMocksAndUsecase(t)
-		mockValidator.On("Validate", argumentPassed).Return(nil)
-		mockRepo.On("Create", mock.Anything, argumentPassed).Return(argumentPassed, errors.New("mock"))
-
-		// act
-		f, err := usecase.CreateFeedback(context.Background(), argumentPassed)
-
-		// assert
-		mockRepo.AssertCalled(t, "Create", mock.Anything, argumentPassed)
-		assert.Equal(t, f, argumentPassed)
-		assert.Equal(t, errors.New("mock"), err, "Should return error if validate fails")
-	})
 }
 
 func TestGetFeedbacksWithPagination(t *testing.T) {
 	t.Run("Doesn't use FeedbackRepository and 0-length slice and error when pagination limit is 0", func(t *testing.T) {
+		t.Cleanup(testing_utils.TruncateTestTables(t, "feedbacks", "attachments"))
 		// arrange
-		usecase, _, _ := getFeedbackMocksAndUsecase(t)
+		usecase, _, _ := getVars()
 
 		// act
 		pagination := feedback_usecases.Pagination{Limit: 0}

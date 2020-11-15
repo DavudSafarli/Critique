@@ -2,6 +2,7 @@ package postgres_repos
 
 import (
 	"context"
+	"fmt"
 
 	sq "github.com/Masterminds/squirrel"
 
@@ -15,7 +16,7 @@ type FeedbackRepository struct {
 
 // NewPGFeedbackRepository ..
 func NewPGFeedbackRepository(connstr string) FeedbackRepository {
-	storage, err := NewDbConnection(connstr)
+	storage, err := NewSingletonDbConnection(connstr)
 	if err != nil {
 		panic("db could not be initialized")
 	}
@@ -31,6 +32,7 @@ func (r FeedbackRepository) GetPaginated(ctx context.Context, skip uint, limit u
 		Limit(uint64(limit))
 
 	sql, args, err := q.ToSql()
+	fmt.Println(sql, args)
 	if err != nil {
 		return nil, err
 	}
@@ -61,6 +63,7 @@ func (r FeedbackRepository) Find(ctx context.Context, id uint) (f models.Feedbac
 		Where(sq.Eq{"id": id})
 
 	sql, args, err := q.ToSql()
+	fmt.Println(sql, args)
 	if err != nil {
 		return f, err
 	}
@@ -68,6 +71,25 @@ func (r FeedbackRepository) Find(ctx context.Context, id uint) (f models.Feedbac
 	err = r.DB.QueryRow(ctx, sql, args...).
 		Scan(&f.ID, &f.Title, &f.Body, &f.CreatedBy, &f.CreatedAt)
 
+	q2 := r.SB.
+		Select("id", "name", "path", "feedback_id").
+		From("attachments").
+		Where(sq.Eq{"feedback_id": id})
+
+	sql, args, err = q2.ToSql()
+	fmt.Println(sql, args)
+	if err != nil {
+		return f, err
+	}
+	rows, err := r.DB.Query(ctx, sql, args...)
+	for rows.Next() {
+		var a models.Attachment
+		err = rows.Scan(&a.ID, &a.Name, &a.Path, &a.FeedbackID)
+		if err != nil {
+			return
+		}
+		f.Attachments = append(f.Attachments, a)
+	}
 	return f, err
 }
 
@@ -85,6 +107,7 @@ func (r FeedbackRepository) Create(ctx context.Context, feedback models.Feedback
 	q = q.Suffix("RETURNING id, title, body, created_by, extract(epoch from created_at) created_at")
 
 	sql, args, err := q.ToSql()
+	fmt.Println(sql, args)
 	if err != nil {
 		return f, err
 	}

@@ -6,13 +6,12 @@ import (
 	"testing"
 
 	"github.com/DavudSafarli/Critique/domain/models"
-	"github.com/DavudSafarli/Critique/util"
 )
 
 // TestTagRepositoryBehaviour does what its name says
-func TestTagRepositoryBehaviour(t *testing.T, abstractRepo TagRepository, cleanupFunc func() error) {
+func TestTagRepositoryBehaviour(t *testing.T, abstractRepo TagRepository, cleanupFunc func()) {
 	t.Run("CreateMany and Get", func(t *testing.T) {
-		t.Cleanup(util.CreateCleanupWrapper(t, cleanupFunc))
+		t.Cleanup(cleanupFunc)
 		insertedTags := []models.Tag{
 			{
 				Name: "NewTagName1",
@@ -45,7 +44,7 @@ func TestTagRepositoryBehaviour(t *testing.T, abstractRepo TagRepository, cleanu
 	})
 
 	t.Run("RemoveMany", func(t *testing.T) {
-		t.Cleanup(util.CreateCleanupWrapper(t, cleanupFunc))
+		t.Cleanup(cleanupFunc)
 		// arrange
 		insertedTags := []models.Tag{
 			{Name: "NewTagName1"},

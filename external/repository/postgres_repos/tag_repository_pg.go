@@ -2,6 +2,7 @@ package postgres_repos
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/DavudSafarli/Critique/domain/models"
 
@@ -15,7 +16,7 @@ type TagRepository struct {
 
 // NewPGTagRepository ..
 func NewPGTagRepository(connstr string) TagRepository {
-	storage, err := NewDbConnection(connstr)
+	storage, err := NewSingletonDbConnection(connstr)
 	if err != nil {
 		panic("db could not be initialized")
 	}
@@ -32,6 +33,7 @@ func (r TagRepository) CreateMany(ctx context.Context, tags []models.Tag) ([]mod
 	q = q.Suffix("RETURNING id, name")
 
 	sql, args, err := q.ToSql()
+	fmt.Println(sql, args)
 	if err != nil {
 		return nil, err
 	}
@@ -56,6 +58,7 @@ func (r TagRepository) Get(ctx context.Context) ([]models.Tag, error) {
 	q := r.SB.Select("*").From("tags")
 
 	sql, args, err := q.ToSql()
+	fmt.Println(sql, args)
 	if err != nil {
 		return nil, err
 	}
@@ -84,6 +87,7 @@ func (r TagRepository) RemoveMany(ctx context.Context, tagIDs []uint) error {
 
 	q = q.Where(sq.Eq{"tags.id": tagIDs})
 	sql, args, err := q.ToSql()
+	fmt.Println(sql, args)
 	if err != nil {
 		return err
 	}

@@ -15,8 +15,8 @@ func main() {
 	connstr := "postgres://admin:critiquesecretpassword@localhost/critique?sslmode=disable"
 
 	feedbackrepo := repository.NewFeedbackRepository("pg", connstr)
-	feedbackvalidator := models.FeedbackValidator{}
-	feedbackImpls := impl.NewFeedbackUsecasesImpl(feedbackrepo, feedbackvalidator)
+	attchrepo := repository.NewAttachmentRepository("pg", connstr)
+	feedbackImpls := impl.NewFeedbackUsecasesImpl(feedbackrepo, attchrepo)
 	// can be used and passed to anywhere seperately
 	//creator := feedbackImpls.(feedback_usecases.FeedbackCreator)
 	//getter := feedbackImpls.(feedback_usecases.FeedbackDetailsGetter)

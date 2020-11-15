@@ -1,31 +1,18 @@
 package postgres_repos
 
 import (
-	"context"
+	"github.com/DavudSafarli/Critique/util/testing_utils"
 	"testing"
 
 	"github.com/DavudSafarli/Critique/external/repository/abstract"
 )
 
 func TestFeedbackRepository(t *testing.T) {
-	storage := vars.storage
+	storage, err := NewSingletonDbConnection(testing_utils.GetTestDbConnStr())
+	if err != nil {
+		panic(err)
+	}
 	repo := &FeedbackRepository{storage}
 
-	abstract.TestFeedbackRepositoryBehaviour(t, repo, GetCleanupFuncForFeedbacks(storage))
-}
-
-func GetCleanupFuncForFeedbacks(storage *Storage) func() error {
-	return func() error {
-		q := storage.SB.Delete("feedbacks")
-
-		sql, args, err := q.ToSql()
-		if err != nil {
-			return err
-		}
-		_, err = storage.DB.Exec(context.Background(), sql, args...)
-		if err != nil {
-			return err
-		}
-		return nil
-	}
+	abstract.TestFeedbackRepositoryBehaviour(t, repo, testing_utils.TruncateTestTables(t, "feedbacks", "attachments"))
 }

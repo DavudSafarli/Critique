@@ -25,9 +25,7 @@ const (
 	INVALID_FEEDBACK StandardError = "InvalidFeedback"
 )
 
-type FeedbackValidator struct{}
-
-func (v FeedbackValidator) Validate(f Feedback) error {
+func (f Feedback) Validate() error {
 	if len(strings.TrimSpace(f.Title)) == 0 {
 		return INVALID_FEEDBACK
 	}
