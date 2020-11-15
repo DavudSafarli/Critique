@@ -2,7 +2,6 @@ package postgres_repos
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/DavudSafarli/Critique/domain/models"
 )
@@ -23,6 +22,7 @@ func NewPGAttachmentRepository(connstr string) AttachmentRepository {
 
 // CreateMany persists new Attachments into the database
 func (r AttachmentRepository) CreateMany(ctx context.Context, attachments []models.Attachment, feedbackId uint) ([]models.Attachment, error) {
+	db := r.getDB(ctx)
 	q := r.SB.Insert("attachments").Columns("name", "path", "feedback_id")
 
 	for _, a := range attachments {
@@ -31,12 +31,11 @@ func (r AttachmentRepository) CreateMany(ctx context.Context, attachments []mode
 	q = q.Suffix("RETURNING id, name, path, feedback_id")
 
 	sql, args, err := q.ToSql()
-	fmt.Println(sql, args)
 	if err != nil {
 		return nil, err
 	}
 
-	rows, err := r.DB.Query(ctx, sql, args...)
+	rows, err := db.Query(ctx, sql, args...)
 
 	if err != nil {
 		return nil, err
@@ -61,7 +60,6 @@ func (r AttachmentRepository) GetAll(ctx context.Context) (attchs []models.Attac
 		From("attachments")
 
 	sql, args, err := q.ToSql()
-	fmt.Println(sql, args)
 	if err != nil {
 		return nil, err
 	}

@@ -2,7 +2,6 @@ package postgres_repos
 
 import (
 	"context"
-	"fmt"
 
 	sq "github.com/Masterminds/squirrel"
 
@@ -32,7 +31,6 @@ func (r FeedbackRepository) GetPaginated(ctx context.Context, skip uint, limit u
 		Limit(uint64(limit))
 
 	sql, args, err := q.ToSql()
-	fmt.Println(sql, args)
 	if err != nil {
 		return nil, err
 	}
@@ -63,7 +61,6 @@ func (r FeedbackRepository) Find(ctx context.Context, id uint) (f models.Feedbac
 		Where(sq.Eq{"id": id})
 
 	sql, args, err := q.ToSql()
-	fmt.Println(sql, args)
 	if err != nil {
 		return f, err
 	}
@@ -77,7 +74,6 @@ func (r FeedbackRepository) Find(ctx context.Context, id uint) (f models.Feedbac
 		Where(sq.Eq{"feedback_id": id})
 
 	sql, args, err = q2.ToSql()
-	fmt.Println(sql, args)
 	if err != nil {
 		return f, err
 	}
@@ -95,6 +91,7 @@ func (r FeedbackRepository) Find(ctx context.Context, id uint) (f models.Feedbac
 
 // Create persists a new Feedback to the database and returns newly inserted Feedback
 func (r FeedbackRepository) Create(ctx context.Context, feedback models.Feedback) (f models.Feedback, err error) {
+	db := r.getDB(ctx)
 	q := r.SB.Insert("feedbacks").
 		Columns("title", "body", "created_by", "created_at").
 		SetMap(map[string]interface{}{
@@ -107,12 +104,11 @@ func (r FeedbackRepository) Create(ctx context.Context, feedback models.Feedback
 	q = q.Suffix("RETURNING id, title, body, created_by, extract(epoch from created_at) created_at")
 
 	sql, args, err := q.ToSql()
-	fmt.Println(sql, args)
 	if err != nil {
 		return f, err
 	}
 
-	err = r.DB.QueryRow(ctx, sql, args...).
+	err = db.QueryRow(ctx, sql, args...).
 		Scan(&f.ID, &f.Title, &f.Body, &f.CreatedBy, &f.CreatedAt)
 
 	return f, err

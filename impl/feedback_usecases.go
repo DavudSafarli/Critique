@@ -32,20 +32,20 @@ var createFeedbackErr = errors.New("create-feedback-err")
 
 // TODO: add integration test for validating Atomicity of CreateFeedback. If CreateAttchmnt fails, then feedback should not persist either
 func (g fi) CreateFeedback(ctx context.Context, feedback models.Feedback) (f models.Feedback, err error) {
+	defer func() { g.commitOrRollback(ctx, err) }()
 	if err := feedback.Validate(); err != nil {
 		return f, err
 	}
 	if ctx, err = g.txer.BeginTx(ctx); err != nil {
-		return
+		return f, err
 	}
-	defer g.commitOrRollback(ctx, err)
 
 	if f, err = g.feedbackRepository.Create(ctx, feedback); err != nil {
 		return f, createFeedbackErr
 	}
 	attchs, err := g.attchRepo.CreateMany(ctx, feedback.Attachments, f.ID)
 	if err != nil {
-		return
+		return f, err
 	}
 	f.Attachments = attchs
 	return

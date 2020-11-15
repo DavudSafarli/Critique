@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"testing"
 	"time"
 
@@ -21,14 +22,14 @@ type AttachmentRepositoryTester interface {
 
 // TestAttachmentRepositoryBehaviour does what its name says
 func TestAttachmentRepositoryBehaviour(t *testing.T, attchRepo AttachmentRepositoryTester, abstractFeedbackRepo FeedbackRepository, cleanupFunc func()) {
-	t.Run("Create attachments successfully", func(t *testing.T) {
+	t.Run("Creates attachments and GetAll them successfully", func(t *testing.T) {
 		t.Cleanup(cleanupFunc)
-		testCreateMany(t, attchRepo, abstractFeedbackRepo)
+		testCreateManyAndGetAll(t, attchRepo, abstractFeedbackRepo)
 	})
 }
 
 // TestCreate does what its name says
-func testCreateMany(t *testing.T, attchRepo AttachmentRepositoryTester, fdbkRepo FeedbackRepository) {
+func testCreateManyAndGetAll(t *testing.T, attchRepo AttachmentRepositoryTester, fdbkRepo FeedbackRepository) {
 	// arrange
 	ctx, cancel := context.WithCancel(context.Background())
 	t.Cleanup(cancel)
@@ -51,9 +52,7 @@ func testCreateMany(t *testing.T, attchRepo AttachmentRepositoryTester, fdbkRepo
 		})
 	}
 	returnedAttchs, err := attchRepo.CreateMany(ctx, attchs, f.ID)
-	if err != nil {
-		t.Fatalf("Failed to Create-Many Attachments : %s", err)
-	}
+	require.Nil(t, err, "Failed to Create-Many Attachments")
 
 	// assert
 	attchsInDb, err := attchRepo.GetAll(ctx)

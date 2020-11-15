@@ -2,6 +2,9 @@ package impl
 
 import (
 	"context"
+	"errors"
+	"github.com/DavudSafarli/Critique/external/repository/mocks"
+	"github.com/stretchr/testify/mock"
 	"sync"
 	"testing"
 	"time"
@@ -80,6 +83,36 @@ func TestCreateFeedback(t *testing.T) {
 		}
 	})
 
+	t.Run("Should maintain atomcity. If Attachments can't be created, database should not have a change", func(t *testing.T) {
+		// arrange
+		t.Cleanup(testing_utils.TruncateTestTables(t, "feedbacks", "attachments"))
+		driver, connstr := "pg", testing_utils.GetTestDbConnStr()
+		feedbackRepo := repository.NewFeedbackRepository(driver, connstr)
+		attachmentRepo := mocks.MockAttachmentRepository{}
+
+		attachmentRepo.On("CreateMany", mock.Anything, mock.Anything, mock.Anything).Return([]models.Attachment{}, errors.New("Any error"))
+		usecase := NewFeedbackUsecasesImpl(feedbackRepo, attachmentRepo).(FeedbackUsecasesImpl)
+
+		//act
+		validInput := models.Feedback{
+			Title:     "Non empty title",
+			Body:      "",
+			CreatedBy: "",
+			CreatedAt: uint(time.Now().Unix()),
+			Attachments: []models.Attachment{
+				{Name: "bla bla2", Path: "/somewhere1"},
+				{Name: "bla bla2", Path: "/somewhere2"},
+			},
+		}
+
+		_, err := usecase.CreateFeedback(context.Background(), validInput)
+		// assert
+		require.Error(t, err, "Should return error")
+		fdbcks, err := usecase.GetFeedbacksWithPagination(context.Background(), feedback_usecases.Pagination{Skip: 0, Limit: 100})
+		require.Nil(t, err, "No error pls")
+		require.Zero(t, len(fdbcks), "Should not create any feedback when Attachment creation failed")
+
+	})
 }
 
 func TestGetFeedbacksWithPagination(t *testing.T) {

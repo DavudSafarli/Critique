@@ -2,6 +2,7 @@ package abstract
 
 import (
 	"context"
+	"github.com/stretchr/testify/require"
 	"reflect"
 	"testing"
 
@@ -10,40 +11,29 @@ import (
 
 // TestTagRepositoryBehaviour does what its name says
 func TestTagRepositoryBehaviour(t *testing.T, abstractRepo TagRepository, cleanupFunc func()) {
-	t.Run("CreateMany and Get", func(t *testing.T) {
+	t.Run("can CreateMany tags at once and Get them all", func(t *testing.T) {
 		t.Cleanup(cleanupFunc)
 		insertedTags := []models.Tag{
-			{
-				Name: "NewTagName1",
-			},
-			{
-				Name: "NewTagName2",
-			},
-			{
-				Name: "NewTagName3",
-			},
+			{Name: "NewTagName1"},
+			{Name: "NewTagName2"},
+			{Name: "NewTagName3"},
 		}
 		numOfInsertedRows := len(insertedTags)
 		ctx, cancel := context.WithCancel(context.Background())
 		t.Cleanup(cancel)
 
 		insertedTags, err := abstractRepo.CreateMany(ctx, insertedTags)
-		if err != nil {
-			t.Fatalf("TagRepository.CreateMany: Failed to add Tags: %s", err)
-		}
+		require.Nil(t, err, "Failed to add Tags")
+
 		selectedTags, err := abstractRepo.Get(ctx)
-		if err != nil {
-			t.Fatalf("TagRepository.Get: Failed to select all Tags: %s", err)
-		}
-		if len(selectedTags) != numOfInsertedRows {
-			t.Fatalf("TagRepository.Get: Didn't return all newly inserted Tags: %s", err)
-		}
-		if reflect.DeepEqual(insertedTags, selectedTags) == false {
-			t.Fatal("Inserted Tags are not the same as selected ones database")
-		}
+		require.Nil(t, err, "Failed to select all Tags")
+
+		require.Equal(t, numOfInsertedRows, len(selectedTags), "Get didn't return all newly inserted Tags")
+
+		require.True(t, reflect.DeepEqual(insertedTags, selectedTags), "Inserted Tags are not the same as selected ones database")
 	})
 
-	t.Run("RemoveMany", func(t *testing.T) {
+	t.Run("can CreateMany tags and RemoveMany at once", func(t *testing.T) {
 		t.Cleanup(cleanupFunc)
 		// arrange
 		insertedTags := []models.Tag{
@@ -64,12 +54,9 @@ func TestTagRepositoryBehaviour(t *testing.T, abstractRepo TagRepository, cleanu
 		err := abstractRepo.RemoveMany(ctx, tagIDs)
 
 		// assert
-		if err != nil {
-			t.Fatalf("TagRepository.RemoveMany: Failed to remove Tags: %s", err)
-		}
-		selectedTags, _ := abstractRepo.Get(ctx)
-		if len(selectedTags) != 0 {
-			t.Fatalf("TagRepository.RemoveMany: Did not remove all Tags. Database still contains some: %s", err)
-		}
+		require.Nil(t, err, "failed to perform RemoveMany")
+		selectedTags, err := abstractRepo.Get(ctx)
+		require.Nil(t, err, "failed to perform Get")
+		require.Zero(t, len(selectedTags), "Did not remove all Tags. Database still contains some")
 	})
 }
