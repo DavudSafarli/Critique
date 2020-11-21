@@ -3,10 +3,12 @@ package abstract
 import (
 	"context"
 	"fmt"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"testing"
 	"time"
+
+	"github.com/adamluzsi/testcase"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/DavudSafarli/Critique/domain/models"
 )
@@ -26,9 +28,10 @@ func TestAttachmentRepositoryBehaviour(t *testing.T, attchRepo AttachmentReposit
 		t.Cleanup(cleanupFunc)
 		testCreateManyAndGetAll(t, attchRepo, abstractFeedbackRepo)
 	})
+	testGetByFeedbackID(t, attchRepo, abstractFeedbackRepo, cleanupFunc)
 }
 
-// TestCreate does what its name says
+// testCreateManyAndGetAll does what its name says
 func testCreateManyAndGetAll(t *testing.T, attchRepo AttachmentRepositoryTester, fdbkRepo FeedbackRepository) {
 	// arrange
 	ctx, cancel := context.WithCancel(context.Background())
@@ -60,4 +63,36 @@ func testCreateManyAndGetAll(t *testing.T, attchRepo AttachmentRepositoryTester,
 	assert.Equal(t, numOfInsertedRows, len(attchsInDb), "Database should contain the same number of rows")
 
 	assert.Equal(t, numOfInsertedRows, len(returnedAttchs), "CreateMany should return the same num. of attachments")
+}
+
+// testGetByFeedbackID makes BDD style testing
+func testGetByFeedbackID(t *testing.T, attchRepo AttachmentRepositoryTester, fdbkRepo FeedbackRepository, cleanupFunc func()) {
+	spec := testcase.NewSpec(t)
+	spec.After(func(t *testcase.T) { cleanupFunc() })
+
+	spec.Describe(`#GetByFeedbackID`, func(s *testcase.Spec) {
+		feedbackID := testcase.Var{Name: `feedbackID`}
+		subject := func(t *testcase.T) ([]models.Attachment, error) {
+			return attchRepo.GetByFeedbackID(context.Background(), feedbackID.Get(t).(uint))
+		}
+		s.When(`there are attachments`, func(s *testcase.Spec) {
+			s.Before(func(t *testcase.T) {
+				f, err := fdbkRepo.Create(context.Background(), models.Feedback{Title: "T", Body: "T", CreatedBy: "T", CreatedAt: uint(time.Now().Unix())})
+				require.Nil(t, err)
+				feedbackID.Set(t, f.ID) // <---------
+				_, err = attchRepo.CreateMany(context.Background(), []models.Attachment{{Name: "A1", Path: "P1"}, {Name: "A2", Path: "P2"}}, f.ID)
+				require.Nil(t, err)
+
+				feedback2 := models.Feedback{Title: "T2", Body: "T2", CreatedBy: "T2", CreatedAt: uint(time.Now().Unix())}
+				_, err = attchRepo.CreateMany(context.Background(), []models.Attachment{{Name: "Z", Path: "Z"}}, feedback2.ID)
+				require.Nil(t, err)
+			})
+			s.Then(`should find them`, func(t *testcase.T) {
+				attchs, err := subject(t)
+				require.Nil(t, err, "No error pls")
+				require.Len(t, attchs, 2)
+			})
+		})
+	})
+
 }

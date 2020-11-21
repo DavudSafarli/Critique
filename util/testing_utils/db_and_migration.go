@@ -44,7 +44,7 @@ func PrepareTestDb() {
 	}
 }
 
-func TruncateTestTables(t *testing.T, tableNamesSlice ...string) func() {
+func TruncateTestTables(t testing.TB, tableNamesSlice ...string) func() {
 	return func() {
 		tableNamesStr := strings.Join(tableNamesSlice, ", ")
 		conn, err := pgx.Connect(context.Background(), GetTestDbConnStr())

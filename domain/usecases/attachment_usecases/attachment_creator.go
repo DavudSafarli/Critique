@@ -7,5 +7,5 @@ import (
 )
 
 type AttachmentCreator interface {
-	CreateAttachment(ctx context.Context, attachments []models.Attachment) ([]models.Attachment, error)
+	CreateAttachments(ctx context.Context, attachments []models.Attachment, feedbackID uint) ([]models.Attachment, error)
 }
