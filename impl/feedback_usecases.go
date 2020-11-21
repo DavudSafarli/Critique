@@ -43,6 +43,9 @@ func (g fi) CreateFeedback(ctx context.Context, feedback models.Feedback) (f mod
 	if f, err = g.feedbackRepository.Create(ctx, feedback); err != nil {
 		return f, createFeedbackErr
 	}
+	if feedback.Attachments == nil {
+		return f, nil
+	}
 	attchs, err := g.attchRepo.CreateMany(ctx, feedback.Attachments, f.ID)
 	if err != nil {
 		return f, err
