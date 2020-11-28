@@ -2,14 +2,15 @@ package postgres_repos
 
 import (
 	"context"
-	"github.com/DavudSafarli/Critique/util/testing_utils"
+	"testing"
+
+	"github.com/DavudSafarli/Critique/testing_utils"
 	"github.com/jackc/pgx/v4"
 	"github.com/stretchr/testify/require"
-	"testing"
 )
 
 func TestTx(t *testing.T) {
-	storage, err := NewSingletonDbConnection(testing_utils.GetTestDbConnStr())
+	storage, err := NewPostgresStorage(testing_utils.GetTestDbConnStr())
 	require.Nil(t, err, "NewSingletonDbConnection Should not return error")
 
 	t.Run("GetDB should return TX interface", func(t *testing.T) {

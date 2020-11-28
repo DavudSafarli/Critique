@@ -13,9 +13,9 @@ type MockTagRepository struct {
 	*MockTX
 }
 
-func (m *MockTagRepository) CreateMany(ctx context.Context, tags []models.Tag) ([]models.Tag, error) {
+func (m *MockTagRepository) CreateMany(ctx context.Context, tags []models.Tag) error {
 	args := m.Called(ctx, tags)
-	return args.Get(0).([]models.Tag), args.Error(1)
+	return args.Error(1)
 }
 
 func (m *MockTagRepository) Get(ctx context.Context) ([]models.Tag, error) {

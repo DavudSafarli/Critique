@@ -10,7 +10,7 @@ import (
 type TagRepository interface {
 	OnePhaseCommitProtocol
 	// CreateMany persists new Tags into the database
-	CreateMany(ctx context.Context, tags []models.Tag) ([]models.Tag, error)
+	CreateMany(ctx context.Context, tags []models.Tag) error
 	// Get returns all Tags
 	Get(ctx context.Context) ([]models.Tag, error)
 	// RemoveMany removes Tags of given tagIDs from database

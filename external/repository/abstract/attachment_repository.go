@@ -10,6 +10,6 @@ import (
 type AttachmentRepository interface {
 	OnePhaseCommitProtocol
 	// CreateMany persists new Tags into the database
-	CreateMany(ctx context.Context, attachments []models.Attachment, feedbackID uint) ([]models.Attachment, error)
+	CreateMany(ctx context.Context, attachments []models.Attachment, feedbackID uint) error
 	GetByFeedbackID(ctx context.Context, feedbackID uint) ([]models.Attachment, error)
 }

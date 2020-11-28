@@ -2,6 +2,7 @@ package impl
 
 import (
 	"context"
+	"errors"
 
 	"github.com/DavudSafarli/Critique/domain/usecases/attachment_usecases"
 
@@ -22,11 +23,12 @@ func NewAttachmentUsecases(attachmentRepo abstract.AttachmentRepository) attachm
 	}
 }
 
+var CreateFeedbackErr = errors.New("create-attachment-err")
+
 // CreateAttachment does what it says
 func (a AttachmentUsecasesImpl) CreateAttachments(ctx context.Context, attachments []models.Attachment, feedbackID uint) (attchs []models.Attachment, err error) {
-	return a.attachmentRepository.CreateMany(ctx, attachments, feedbackID)
-}
-
-func (a AttachmentUsecasesImpl) GetAttachments(ctx context.Context, feedbackID uint) (attchs []models.Attachment, err error) {
-	return a.attachmentRepository.GetByFeedbackID(ctx, feedbackID)
+	if len(attachments) == 0 {
+		return nil, CreateFeedbackErr
+	}
+	return attachments, a.attachmentRepository.CreateMany(ctx, attachments, feedbackID)
 }
