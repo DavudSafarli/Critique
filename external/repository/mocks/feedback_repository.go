@@ -26,9 +26,9 @@ func (m *MockFeedbackRepository) Find(ctx context.Context, id uint) (f models.Fe
 }
 
 // Create is a mock
-func (m *MockFeedbackRepository) Create(ctx context.Context, feedback models.Feedback) (f models.Feedback, err error) {
+func (m *MockFeedbackRepository) Create(ctx context.Context, feedback *models.Feedback) (err error) {
 	args := m.Called(ctx, feedback)
-	return args.Get(0).(models.Feedback), args.Error(1)
+	return args.Error(1)
 }
 
 // UpdateTagIDs is a mock

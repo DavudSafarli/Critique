@@ -30,5 +30,5 @@ func (t ti) DeleteTags(ctx context.Context, tagIds []uint) error {
 }
 
 func (t ti) CreateTags(ctx context.Context, tags []models.Tag) ([]models.Tag, error) {
-	return t.tagRepository.CreateMany(ctx, tags)
+	return tags, t.tagRepository.CreateMany(ctx, tags)
 }

@@ -3,7 +3,6 @@ package impl
 import (
 	"context"
 	"errors"
-
 	"github.com/DavudSafarli/Critique/external/repository/abstract"
 
 	"github.com/DavudSafarli/Critique/domain/models"
@@ -31,27 +30,27 @@ func NewFeedbackUsecasesImpl(repo abstract.FeedbackRepository, attchRepo abstrac
 var createFeedbackErr = errors.New("create-feedback-err")
 
 // TODO: add integration test for validating Atomicity of CreateFeedback. If CreateAttchmnt fails, then feedback should not persist either
-func (g fi) CreateFeedback(ctx context.Context, feedback models.Feedback) (f models.Feedback, err error) {
+func (g fi) CreateFeedback(ctx context.Context, feedback models.Feedback) (emptyFeedback models.Feedback, err error) {
+	if err = feedback.Validate(); err != nil {
+		return
+	}
+	ctx, err = g.txer.BeginTx(ctx)
+	if err != nil {
+		return
+	}
 	defer func() { g.commitOrRollback(ctx, err) }()
-	if err := feedback.Validate(); err != nil {
-		return f, err
-	}
-	if ctx, err = g.txer.BeginTx(ctx); err != nil {
-		return f, err
-	}
 
-	if f, err = g.feedbackRepository.Create(ctx, feedback); err != nil {
-		return f, createFeedbackErr
+	if err = g.feedbackRepository.Create(ctx, &feedback); err != nil {
+		return emptyFeedback, createFeedbackErr
 	}
 	if feedback.Attachments == nil {
-		return f, nil
+		return feedback, nil
 	}
-	attchs, err := g.attchRepo.CreateMany(ctx, feedback.Attachments, f.ID)
+	err = g.attchRepo.CreateMany(ctx, feedback.Attachments, feedback.ID)
 	if err != nil {
-		return f, err
+		return
 	}
-	f.Attachments = attchs
-	return
+	return feedback, nil
 }
 
 func (g fi) GetFeedbackDetails(ctx context.Context, id uint) (models.Feedback, error) {
@@ -68,7 +67,7 @@ func (g fi) GetFeedbacksWithPagination(ctx context.Context, pagination feedback_
 
 func (g fi) commitOrRollback(ctx context.Context, err error) {
 	if err != nil {
-		g.txer.RollbackTx(ctx)
+		err = g.txer.RollbackTx(ctx)
 		return
 	}
 	err = g.txer.CommitTx(ctx)
