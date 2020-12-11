@@ -1,10 +1,9 @@
-package specs
+package impl
 
 import (
 	"errors"
+	"github.com/DavudSafarli/Critique/domain/contracts"
 	"testing"
-
-	"github.com/DavudSafarli/Critique/spec_helper"
 
 	"github.com/DavudSafarli/Critique/domain/models"
 	"github.com/DavudSafarli/Critique/domain/usecases/feedback_usecases"
@@ -25,22 +24,23 @@ func TestFeedbackUc(t *testing.T) {
 	t.Parallel()
 	spec := testcase.NewSpec(t)
 	spec.Parallel()
+	setupUsecaseDependencies(spec)
 
-	getctx := spec_helper.GetTxContextForTest
-	getFeedbackUc := spec_helper.GetFeedbackUsecaseForTest
+	getctx := contracts.GetTxContextForTest
+	getFeedbackUc := GetFeedbackUsecaseForTest
 	spec.Describe(`#CreateFeedback`, func(s *testcase.Spec) {
 		subject := func(t *testcase.T) (models.Feedback, error) {
-			return getFeedbackUc(t).CreateFeedback(getctx(t), *spec_helper.GetFeedback(t))
+			return getFeedbackUc(t).CreateFeedback(getctx(t), *contracts.GetFeedback(t))
 		}
 		s.When(`We provide invalid feedback`, func(s *testcase.Spec) {
-			LetValueUnsafe(spec_helper.Feedback, s, &models.Feedback{}) // invalid feedback
+			LetValueUnsafe(contracts.Feedback, s, &models.Feedback{}) // invalid feedback
 			s.Then(`It will return an error`, func(t *testcase.T) {
 				_, err := subject(t)
 				require.Error(t, err)
 			})
 		})
 		s.When(`We provide valid feedback withOUT attachment`, func(s *testcase.Spec) {
-			LetValueUnsafe(spec_helper.Feedback, s, testing_utils.ExampleFeedback()) // valid feedback
+			LetValueUnsafe(contracts.Feedback, s, testing_utils.ExampleFeedback()) // valid feedback
 			s.Then(`It should be retrievable`, func(t *testcase.T) {
 				f, err := subject(t)
 				require.Nil(t, err)
@@ -53,7 +53,7 @@ func TestFeedbackUc(t *testing.T) {
 		s.When(`We provide valid feedback WITH attachments`, func(s *testcase.Spec) {
 			f := testing_utils.ExampleFeedback()
 			f.Attachments = testing_utils.ExampleAttchSlice(4)
-			LetValueUnsafe(spec_helper.Feedback, s, f) // valid feedback
+			LetValueUnsafe(contracts.Feedback, s, f) // valid feedback
 			s.Then(`It and its attachments should be retrievable`, func(t *testcase.T) {
 				inserted, err := subject(t)
 				require.Nil(t, err)
@@ -65,11 +65,15 @@ func TestFeedbackUc(t *testing.T) {
 		s.When(`Feedback and attachments are valid, but Attachment creation fails for some reason`, func(s *testcase.Spec) {
 			f := testing_utils.ExampleFeedback()
 			f.Attachments = testing_utils.ExampleAttchSlice(4)
-			LetValueUnsafe(spec_helper.Feedback, s, f) // valid feedback
-			spec_helper.AttachmentRepoForTest.Let(s, func(t *testcase.T) interface{} {
-				mockAttchRepo := &mocks.MockAttachmentRepository{}
-				mockAttchRepo.On("CreateMany", mock.Anything, mock.Anything, mock.Anything).Return(errors.New("Any error"))
-				return mockAttchRepo
+			LetValueUnsafe(contracts.Feedback, s, f) // valid feedback
+
+			s.Before(func(t *testcase.T) { // replace storage with mock
+				mockRepo := &mocks.FailingAttachmentFakeStorage{
+					Storage: GetFeedbackUsecaseForTest(t).storage,
+				}
+				mockRepo.On("CreateManyAttachments", mock.Anything, mock.Anything, mock.Anything).Return(errors.New("Any error"))
+				uc := GetFeedbackUsecaseForTest(t)
+				uc.storage = mockRepo
 			})
 			s.Then(`It should maintain atomicity(Db should not have a change)`, func(t *testcase.T) {
 				_, err := subject(t)

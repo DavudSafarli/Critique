@@ -12,18 +12,18 @@ import (
 
 // FeedbackRepository is FeedbackRepository
 type FeedbackRepository struct {
-	*Storage
+	database *database
 }
 
 // NewPGFeedbackRepository ..
-func NewPGFeedbackRepository(storage *Storage) *FeedbackRepository {
-	return &FeedbackRepository{storage}
+func NewPGFeedbackRepository(database *database) *FeedbackRepository {
+	return &FeedbackRepository{database: database}
 }
 
-// GetPaginated returns records with pagination
-func (r *FeedbackRepository) GetPaginated(ctx context.Context, skip uint, limit uint) ([]models.Feedback, error) {
-	db := r.getDB(ctx)
-	q := r.SB.
+// GetFeedbacksPaginated returns records with pagination
+func (r *FeedbackRepository) GetFeedbacksPaginated(ctx context.Context, skip uint, limit uint) ([]models.Feedback, error) {
+	db := getDB(ctx, r.database.DB)
+	q := r.database.SB.
 		Select("id", "title", "body", "created_by", "extract(epoch from created_at) created_at").
 		From("feedbacks").
 		Offset(uint64(skip)).
@@ -48,14 +48,14 @@ func (r *FeedbackRepository) GetPaginated(ctx context.Context, skip uint, limit 
 		}
 		got = append(got, f)
 	}
-	r.close(db)
+
 	return got, nil
 }
 
 // Find finds and retrieves a single record with the given ID
-func (r *FeedbackRepository) Find(ctx context.Context, id uint) (f models.Feedback, err error) {
-	db := r.getDB(ctx)
-	q := r.SB.
+func (r *FeedbackRepository) FindFeedback(ctx context.Context, id uint) (f models.Feedback, err error) {
+	db := getDB(ctx, r.database.DB)
+	q := r.database.SB.
 		Select("id", "title", "body", "created_by", "extract(epoch from created_at) created_at").
 		From("feedbacks").
 		Where(sq.Eq{"id": id})
@@ -70,7 +70,7 @@ func (r *FeedbackRepository) Find(ctx context.Context, id uint) (f models.Feedba
 	if err != nil {
 		return
 	}
-	q2 := r.SB.
+	q2 := r.database.SB.
 		Select("id", "name", "path", "feedback_id").
 		From("attachments").
 		Where(sq.Eq{"feedback_id": id})
@@ -91,14 +91,14 @@ func (r *FeedbackRepository) Find(ctx context.Context, id uint) (f models.Feedba
 	if err == pgx.ErrNoRows {
 		err = nil
 	}
-	r.close(db)
+
 	return f, err
 }
 
 // Create persists a new Feedback to the database and returns newly inserted Feedback
-func (r *FeedbackRepository) Create(ctx context.Context, feedback *models.Feedback) (err error) {
-	db := r.getDB(ctx)
-	q := r.SB.Insert("feedbacks").
+func (r *FeedbackRepository) CreateFeedback(ctx context.Context, feedback *models.Feedback) (err error) {
+	db := getDB(ctx, r.database.DB)
+	q := r.database.SB.Insert("feedbacks").
 		Columns("title", "body", "created_by", "created_at").
 		SetMap(map[string]interface{}{
 			"title":      feedback.Title,
@@ -116,7 +116,7 @@ func (r *FeedbackRepository) Create(ctx context.Context, feedback *models.Feedba
 
 	err = db.QueryRow(ctx, sql, args...).
 		Scan(&feedback.ID, &feedback.Title, &feedback.Body, &feedback.CreatedBy, &feedback.CreatedAt)
-	r.close(db)
+
 	return err
 }
 
@@ -126,8 +126,8 @@ func (r *FeedbackRepository) UpdateTagIDs(ctx context.Context, tagIDFrom uint, t
 }
 
 func (r *FeedbackRepository) GetAll(ctx context.Context) ([]models.Feedback, error) {
-	db := r.getDB(ctx)
-	q := r.SB.Select("id", "title", "body", "created_by", "extract(epoch from created_at) created_at").From("feedbacks")
+	db := getDB(ctx, r.database.DB)
+	q := r.database.SB.Select("id", "title", "body", "created_by", "extract(epoch from created_at) created_at").From("feedbacks")
 	sql, _, err := q.ToSql()
 	if err != nil {
 		return nil, err
@@ -146,12 +146,12 @@ func (r *FeedbackRepository) GetAll(ctx context.Context) ([]models.Feedback, err
 func (r *FeedbackRepository) scan(rows pgx.Rows) (got []models.Feedback, err error) {
 	got = []models.Feedback{}
 	for rows.Next() {
-		var r models.Feedback
-		err = rows.Scan(&r.ID, &r.Title, &r.Body, &r.CreatedBy, &r.CreatedAt)
+		var f models.Feedback
+		err = rows.Scan(&f.ID, &f.Title, &f.Body, &f.CreatedBy, &f.CreatedAt)
 		if err != nil {
 			return nil, err
 		}
-		got = append(got, r)
+		got = append(got, f)
 	}
 	if err := rows.Err(); err != nil {
 		return got, err

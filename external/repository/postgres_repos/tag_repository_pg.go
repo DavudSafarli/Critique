@@ -10,17 +10,17 @@ import (
 
 // TagRepository is TagRepository
 type TagRepository struct {
-	*Storage
+	*database
 }
 
 // NewPGTagRepository ..
-func NewPGTagRepository(storage *Storage) TagRepository {
-	return TagRepository{storage}
+func NewPGTagRepository(database *database) *TagRepository {
+	return &TagRepository{database}
 }
 
 // CreateMany persists new Tags into the database
-func (r TagRepository) CreateMany(ctx context.Context, tags []models.Tag) error {
-	db := r.getDB(ctx)
+func (r *TagRepository) CreateManyTags(ctx context.Context, tags []models.Tag) error {
+	db := getDB(ctx, r.DB)
 	q := r.SB.Insert("tags").Columns("name")
 
 	for _, tag := range tags {
@@ -52,8 +52,8 @@ func (r TagRepository) CreateMany(ctx context.Context, tags []models.Tag) error 
 }
 
 // Get returns all Tags
-func (r TagRepository) Get(ctx context.Context) ([]models.Tag, error) {
-	db := r.getDB(ctx)
+func (r *TagRepository) GetTags(ctx context.Context) ([]models.Tag, error) {
+	db := getDB(ctx, r.DB)
 	q := r.SB.Select("*").From("tags")
 
 	sql, args, err := q.ToSql()
@@ -80,8 +80,8 @@ func (r TagRepository) Get(ctx context.Context) ([]models.Tag, error) {
 }
 
 // RemoveMany removes Tags of given tagIDs from database
-func (r TagRepository) RemoveMany(ctx context.Context, tagIDs []uint) error {
-	db := r.getDB(ctx)
+func (r *TagRepository) RemoveManyTags(ctx context.Context, tagIDs []uint) error {
+	db := getDB(ctx, r.DB)
 	q := r.SB.Delete("tags")
 
 	q = q.Where(sq.Eq{"tags.id": tagIDs})

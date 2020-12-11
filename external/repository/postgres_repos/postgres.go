@@ -2,15 +2,16 @@ package postgres_repos
 
 import (
 	"context"
-	"github.com/jackc/pgx/v4/pgxpool"
 	"log"
+
+	"github.com/jackc/pgx/v4/pgxpool"
 
 	"github.com/Masterminds/squirrel"
 	_ "github.com/jackc/pgx/v4"
 )
 
 // Storage is storage
-type Storage struct {
+type database struct {
 	DB *pgxpool.Pool
 	SB squirrel.StatementBuilderType
 }
@@ -28,7 +29,7 @@ type Storage struct {
 // And use connection string below, to connect to postgres database:
 //
 // postgres://admin:critiquesecretpassword@localhost/critique?sslmode=disable
-func NewPostgresStorage(connStr string) (*Storage, error) {
+func NewPostgresDatabase(connStr string) (*database, error) {
 	poolConfig, err := pgxpool.ParseConfig(connStr)
 	poolConfig.MaxConns = 8
 	pool, err := pgxpool.ConnectConfig(context.Background(), poolConfig)
@@ -36,9 +37,23 @@ func NewPostgresStorage(connStr string) (*Storage, error) {
 		log.Fatal("Unable to create connection pool", "error", err)
 	}
 
-	storage := &Storage{
+	storage := &database{
 		DB: pool,
 		SB: squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar),
 	}
 	return storage, nil
+}
+
+type Storage struct {
+	*AttachmentRepository
+	*FeedbackRepository
+	*TagRepository
+}
+
+func NewPostgresStorage(attchRepo *AttachmentRepository, feedbackRepo *FeedbackRepository, tagRepo *TagRepository) *Storage {
+	return &Storage{
+		AttachmentRepository: attchRepo,
+		FeedbackRepository:   feedbackRepo,
+		TagRepository:        tagRepo,
+	}
 }

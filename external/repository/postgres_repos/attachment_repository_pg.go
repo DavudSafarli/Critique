@@ -11,17 +11,17 @@ import (
 
 // AttachmentRepository is AttachmentRepository
 type AttachmentRepository struct {
-	*Storage
+	database *database
 }
 
 // NewPGAttachmentRepository ..
-func NewPGAttachmentRepository(storage *Storage) *AttachmentRepository {
-	return &AttachmentRepository{storage}
+func NewPGAttachmentRepository(database *database) *AttachmentRepository {
+	return &AttachmentRepository{database}
 }
 
-func (r *AttachmentRepository) GetByFeedbackID(ctx context.Context, feedbackID uint) ([]models.Attachment, error) {
-	db := r.getDB(ctx)
-	q := r.SB.
+func (r *AttachmentRepository) GetAttachmentsByFeedbackID(ctx context.Context, feedbackID uint) ([]models.Attachment, error) {
+	db := getDB(ctx, r.database.DB)
+	q := r.database.SB.
 		Select("id", "name", "path", "feedback_id").
 		From("attachments").
 		Where(sq.Eq{"feedback_id": feedbackID})
@@ -34,7 +34,7 @@ func (r *AttachmentRepository) GetByFeedbackID(ctx context.Context, feedbackID u
 	if err != nil {
 		return nil, err
 	}
-	r.close(db)
+	//r.close(db)
 	return got, err
 }
 
@@ -55,9 +55,9 @@ func (r *AttachmentRepository) scan(rows pgx.Rows) (got []models.Attachment, err
 }
 
 // CreateMany persists new Attachments into the database
-func (r *AttachmentRepository) CreateMany(ctx context.Context, attachments []models.Attachment, feedbackID uint) error {
-	db := r.getDB(ctx)
-	q := r.SB.Insert("attachments").Columns("name", "path", "feedback_id")
+func (r *AttachmentRepository) CreateManyAttachments(ctx context.Context, attachments []models.Attachment, feedbackID uint) error {
+	db := getDB(ctx, r.database.DB)
+	q := r.database.SB.Insert("attachments").Columns("name", "path", "feedback_id")
 
 	for _, a := range attachments {
 		q = q.Values(a.Name, a.Path, feedbackID)
@@ -80,14 +80,14 @@ func (r *AttachmentRepository) CreateMany(ctx context.Context, attachments []mod
 		return err
 	}
 	copy(attachments, got)
-	r.close(db)
+	//r.close(db)
 	return nil
 
 }
 
-func (r *AttachmentRepository) GetAll(ctx context.Context) ([]models.Attachment, error) {
-	db := r.getDB(ctx)
-	q := r.SB.
+func (r *AttachmentRepository) GetAllAttachments(ctx context.Context) ([]models.Attachment, error) {
+	db := getDB(ctx, r.database.DB)
+	q := r.database.SB.
 		Select("id", "name", "path", "feedback_id").
 		From("attachments")
 
@@ -101,6 +101,6 @@ func (r *AttachmentRepository) GetAll(ctx context.Context) ([]models.Attachment,
 	if err != nil {
 		return nil, err
 	}
-	r.close(db)
+	//r.close(db)
 	return got, err
 }

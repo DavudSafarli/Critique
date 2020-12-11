@@ -34,7 +34,7 @@ func (f Feedback) Validate() error {
 
 // FeedbackRepository is the contract that all implementations must implement
 //type FeedbackRepository interface {
-//	GetPaginated(ctx context.Context, skip uint, limit uint) ([]Feedback, error)
+//	GetFeedbacksPaginated(ctx context.Context, skip uint, limit uint) ([]Feedback, error)
 //	Find(ctx context.Context, id uint) (Feedback, error)
 //	Create(ctx context.Context, feedback Feedback) (Feedback, error)
 //	UpdateTagIDs(ctx context.Context, tagIDFrom uint, tagIDTo uint) error
