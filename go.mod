@@ -5,6 +5,7 @@ go 1.14
 require (
 	github.com/Masterminds/squirrel v1.4.0
 	github.com/adamluzsi/testcase v0.24.0
+	github.com/go-chi/chi v1.5.1
 	github.com/golang-migrate/migrate/v4 v4.13.0
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/jackc/pgtype v1.6.1

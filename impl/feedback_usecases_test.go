@@ -24,7 +24,7 @@ func TestFeedbackUc(t *testing.T) {
 	t.Parallel()
 	spec := testcase.NewSpec(t)
 	spec.Parallel()
-	setupUsecaseDependencies(spec)
+	SetupUsecaseDependencies(spec)
 
 	getctx := contracts.GetTxContextForTest
 	getFeedbackUc := GetFeedbackUsecaseForTest

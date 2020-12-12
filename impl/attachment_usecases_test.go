@@ -14,7 +14,7 @@ func TestAttchUc(t *testing.T) {
 	t.Parallel()
 	spec := testcase.NewSpec(t)
 	spec.Parallel()
-	setupUsecaseDependencies(spec)
+	SetupUsecaseDependencies(spec)
 	getCtx := contracts.GetTxContextForTest
 
 	spec.Describe(`AttachmentUsecases#CreateMany`, func(s *testcase.Spec) {

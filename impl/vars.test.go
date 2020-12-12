@@ -9,7 +9,7 @@ import (
 
 // setupUsecaseDependencies invokes the `variable setup function` of implementation of certain dependencies
 // For ex: changing this to in_memory.SetupStorageVar(spec) would make `usecases tests` run with in memory storage implementation
-func setupUsecaseDependencies(spec *testcase.Spec) {
+func SetupUsecaseDependencies(spec *testcase.Spec) {
 	postgres_repos.SetupPostgresStorageVar(spec)
 }
 
