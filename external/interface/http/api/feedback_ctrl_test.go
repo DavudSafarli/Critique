@@ -24,20 +24,11 @@ var GetFeedbackCtrlForTest = func(t *testcase.T) *FeedbackCtrl {
 	return FeedbackCtrlForTest.Get(t).(*FeedbackCtrl)
 }
 
-type server struct {
-	dep func(http.ResponseWriter, *http.Request)
-}
-func(s server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	s.dep(w, r)
-}
-func funcToHandler(dep func(http.ResponseWriter, *http.Request)) server {
-	return server{dep:dep}
-}
-
 func TestFeedbackCtrl(t *testing.T) {
 	s := testcase.NewSpec(t)
 	s.Parallel()
 	t.Parallel()
+	getCtx := contracts.GetTxContextForTest
 	impl.SetupUsecaseDependencies(s)
 	httpspec.HandlerSpec(s, func(t *testcase.T) http.Handler {
 		return GetHandler(*GetFeedbackCtrlForTest(t))
@@ -49,7 +40,7 @@ func TestFeedbackCtrl(t *testing.T) {
 		return contracts.GetTxContextForTest(t)
 	})
 
-	s.Describe(`POST /feedbacks - create Attachment`, func(s *testcase.Spec) {
+	s.Describe(`POST /feedbacks - create a Feedback`, func(s *testcase.Spec) {
 		httpspec.LetMethodValue(s, http.MethodPost)
 		httpspec.LetPathValue(s, `/feedbacks`)
 
@@ -69,9 +60,15 @@ func TestFeedbackCtrl(t *testing.T) {
 					CreatedBy:   "id of someone",
 				}}
 			})
-			s.Then(`it should return 200 OK`, func(t *testcase.T) {
+			s.Then(`it should return 200 OK with a non-zero ID assigned`, func(t *testcase.T) {
 				response := onSuccess(t)
 				require.NotZero(t, response.ID)
+			})
+			s.Then(`it should be able to find that created feedback `, func(t *testcase.T) {
+				response := onSuccess(t)
+				f, err := impl.GetFeedbackUsecaseForTest(t).GetFeedbackDetails(getCtx(t), response.ID)
+				require.Nil(t, err)
+				require.Equal(t, response.ID, f.ID)
 			})
 		})
 	})
