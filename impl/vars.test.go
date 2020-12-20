@@ -2,7 +2,7 @@ package impl
 
 import (
 	"github.com/DavudSafarli/Critique/domain/contracts"
-	"github.com/DavudSafarli/Critique/domain/usecases/attachment_usecases"
+	"github.com/DavudSafarli/Critique/domain/usecases"
 	"github.com/DavudSafarli/Critique/external/repository/postgres_repos"
 	"github.com/adamluzsi/testcase"
 )
@@ -20,8 +20,8 @@ var (
 			return NewAttachmentUsecases(contracts.GetStorage(t))
 		},
 	}
-	GetAttachmentUsecaseForTest = func(t *testcase.T) attachment_usecases.AttachmentUsecases {
-		return AttachmentUsecaseForTest.Get(t).(attachment_usecases.AttachmentUsecases)
+	GetAttachmentUsecaseForTest = func(t *testcase.T) usecases.AttachmentUsecases {
+		return AttachmentUsecaseForTest.Get(t).(usecases.AttachmentUsecases)
 	}
 	FeedbackUsecaseForTest = testcase.Var{
 		Name: "FeedbackUsecaseForTest",

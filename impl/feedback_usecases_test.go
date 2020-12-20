@@ -3,10 +3,10 @@ package impl
 import (
 	"errors"
 	"github.com/DavudSafarli/Critique/domain/contracts"
+	"github.com/DavudSafarli/Critique/domain/usecases"
 	"testing"
 
 	"github.com/DavudSafarli/Critique/domain/models"
-	"github.com/DavudSafarli/Critique/domain/usecases/feedback_usecases"
 	"github.com/DavudSafarli/Critique/external/repository/mocks"
 	"github.com/DavudSafarli/Critique/testing_utils"
 	"github.com/adamluzsi/testcase"
@@ -78,7 +78,7 @@ func TestFeedbackUc(t *testing.T) {
 			s.Then(`It should maintain atomicity(Db should not have a change)`, func(t *testcase.T) {
 				_, err := subject(t)
 				require.Error(t, err)
-				allFeedbacks, err := getFeedbackUc(t).GetFeedbacksWithPagination(getctx(t), feedback_usecases.Pagination{Skip: 0, Limit: 100})
+				allFeedbacks, err := getFeedbackUc(t).GetFeedbacksWithPagination(getctx(t), usecases.Pagination{Skip: 0, Limit: 100})
 				require.Nil(t, err)
 				require.Len(t, allFeedbacks, 0, "Should not create any feedback when Attachment creation failed")
 			})

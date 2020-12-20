@@ -4,8 +4,7 @@ import (
 	"context"
 	"errors"
 	"github.com/DavudSafarli/Critique/domain/contracts"
-
-	"github.com/DavudSafarli/Critique/domain/usecases/attachment_usecases"
+	"github.com/DavudSafarli/Critique/domain/usecases"
 
 	"github.com/DavudSafarli/Critique/domain/models"
 )
@@ -17,7 +16,7 @@ type AttachmentUsecasesImpl struct {
 type ai = AttachmentUsecasesImpl
 
 // NewAttachmentUsecases creates a new AttachmentUsecases
-func NewAttachmentUsecases(storage contracts.Storage) attachment_usecases.AttachmentUsecases {
+func NewAttachmentUsecases(storage contracts.Storage) usecases.AttachmentUsecases {
 	return &AttachmentUsecasesImpl{
 		storage: storage,
 	}

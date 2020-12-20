@@ -1,4 +1,4 @@
-package attachment_usecases
+package usecases
 
 import (
 	"context"
@@ -6,6 +6,6 @@ import (
 	"github.com/DavudSafarli/Critique/domain/models"
 )
 
-type AttachmentCreator interface {
+type AttachmentUsecases interface {
 	CreateAttachments(ctx context.Context, attachments []models.Attachment, feedbackID uint) ([]models.Attachment, error)
 }

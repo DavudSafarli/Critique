@@ -6,14 +6,15 @@ import (
 	"strconv"
 
 	"github.com/DavudSafarli/Critique/domain/models"
-	"github.com/DavudSafarli/Critique/domain/usecases/feedback_usecases"
+	"github.com/DavudSafarli/Critique/domain/usecases"
 	"github.com/go-chi/chi"
 )
 
 type FeedbackCtrl struct {
-	usecases feedback_usecases.FeedbackUsecases
+	usecases usecases.FeedbackUsecases
 }
-func NewFeedbackCtrl(usecases feedback_usecases.FeedbackUsecases) *FeedbackCtrl{
+
+func NewFeedbackCtrl(usecases usecases.FeedbackUsecases) *FeedbackCtrl {
 	return &FeedbackCtrl{
 		usecases: usecases,
 	}

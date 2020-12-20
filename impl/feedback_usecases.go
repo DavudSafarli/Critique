@@ -3,10 +3,11 @@ package impl
 import (
 	"context"
 	"errors"
+
 	"github.com/DavudSafarli/Critique/domain/contracts"
+	"github.com/DavudSafarli/Critique/domain/usecases"
 
 	"github.com/DavudSafarli/Critique/domain/models"
-	"github.com/DavudSafarli/Critique/domain/usecases/feedback_usecases"
 )
 
 type fi = FeedbackUsecasesImpl
@@ -17,7 +18,7 @@ type FeedbackUsecasesImpl struct {
 }
 
 // NewFeedbackUsecasesImpl creates new FeedbackUsecasesImpl
-func NewFeedbackUsecasesImpl(storage contracts.Storage) feedback_usecases.FeedbackUsecases {
+func NewFeedbackUsecasesImpl(storage contracts.Storage) usecases.FeedbackUsecases {
 	return &FeedbackUsecasesImpl{
 		storage: storage,
 	}
@@ -53,7 +54,7 @@ func (g *fi) GetFeedbackDetails(ctx context.Context, id uint) (models.Feedback, 
 	return g.storage.FindFeedback(ctx, id)
 }
 
-func (g *fi) GetFeedbacksWithPagination(ctx context.Context, pagination feedback_usecases.Pagination) ([]models.Feedback, error) {
+func (g *fi) GetFeedbacksWithPagination(ctx context.Context, pagination usecases.Pagination) ([]models.Feedback, error) {
 	if pagination.Limit == 0 {
 		return nil, ZeroLimitPaginationErr
 	}
