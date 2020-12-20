@@ -2,6 +2,8 @@ package models
 
 import (
 	"strings"
+
+	"github.com/DavudSafarli/Critique/domain"
 )
 
 // Feedback is a models model
@@ -26,10 +28,10 @@ const (
 )
 
 func (f Feedback) Validate() error {
-	if len(strings.TrimSpace(f.Title)) == 0 {
-		return INVALID_FEEDBACK
+	if len(strings.TrimSpace(f.Title)) != 0 {
+		return nil
 	}
-	return nil
+	return domain.ErrUnprocessable
 }
 
 // FeedbackRepository is the contract that all implementations must implement

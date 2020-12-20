@@ -2,9 +2,12 @@ package api
 
 import (
 	"encoding/json"
+	"net/http"
+	"strconv"
+
 	"github.com/DavudSafarli/Critique/domain/models"
 	"github.com/DavudSafarli/Critique/domain/usecases/feedback_usecases"
-	"net/http"
+	"github.com/go-chi/chi"
 )
 
 type FeedbackCtrl struct {
@@ -19,6 +22,9 @@ func NewFeedbackCtrl(usecases feedback_usecases.FeedbackUsecases) *FeedbackCtrl{
 type createFeedbackRequest struct {
 	Feedback models.Feedback
 }
+type createFeedbackResponse struct {
+	Feedback models.Feedback
+}
 
 func (ctrl *FeedbackCtrl) Create(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
@@ -29,12 +35,40 @@ func (ctrl *FeedbackCtrl) Create(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	feedback, err := ctrl.usecases.CreateFeedback(ctx, req.Feedback)
 	if err != nil {
-
+		responseJSONError(w, err)
+		return
 	}
-	responseJson(w, feedback)
+	responseJSON(w, createFeedbackResponse{Feedback: feedback})
 }
 
-func responseJson(w http.ResponseWriter, data interface{}) {
+type getFeedbackResponse struct {
+	Feedback models.Feedback
+}
+
+func (ctrl *FeedbackCtrl) Get(w http.ResponseWriter, r *http.Request) {
+	defer r.Body.Close()
+	id, err := strconv.Atoi(chi.URLParam(r, "id"))
+	if err != nil {
+		return
+	}
+	ctx := r.Context()
+	feedback, err := ctrl.usecases.GetFeedbackDetails(ctx, uint(id))
+	if err != nil {
+		responseJSONError(w, err)
+		return
+	}
+	responseJSON(w, getFeedbackResponse{Feedback: feedback})
+}
+
+func responseJSON(w http.ResponseWriter, data interface{}) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(data)
+}
+
+// responseJSONError converts error into meaningful response body
+// and sends response with proper status code
+func responseJSONError(w http.ResponseWriter, err error) {
+	response := toHttp(err)
+	w.WriteHeader(response.Status)
+	responseJSON(w, response)
 }

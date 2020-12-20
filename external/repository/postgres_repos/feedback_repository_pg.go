@@ -67,9 +67,11 @@ func (r *FeedbackRepository) FindFeedback(ctx context.Context, id uint) (f model
 
 	err = db.QueryRow(ctx, sql, args...).
 		Scan(&f.ID, &f.Title, &f.Body, &f.CreatedBy, &f.CreatedAt)
+
 	if err != nil {
-		return
+		return f, convertPgErrorToDomainError(err)
 	}
+
 	q2 := r.database.SB.
 		Select("id", "name", "path", "feedback_id").
 		From("attachments").
