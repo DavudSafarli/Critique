@@ -12,16 +12,16 @@ import (
 
 // FeedbackRepository is FeedbackRepository
 type FeedbackRepository struct {
-	database *database
+	database database
 }
 
 // NewPGFeedbackRepository ..
-func NewPGFeedbackRepository(database *database) *FeedbackRepository {
-	return &FeedbackRepository{database: database}
+func NewPGFeedbackRepository(database database) FeedbackRepository {
+	return FeedbackRepository{database: database}
 }
 
 // GetFeedbacksPaginated returns records with pagination
-func (r *FeedbackRepository) GetFeedbacksPaginated(ctx context.Context, skip uint, limit uint) ([]models.Feedback, error) {
+func (r FeedbackRepository) GetFeedbacksPaginated(ctx context.Context, skip uint, limit uint) ([]models.Feedback, error) {
 	db := getDB(ctx, r.database.DB)
 	q := r.database.SB.
 		Select("id", "title", "body", "created_by", "extract(epoch from created_at) created_at").
@@ -53,7 +53,7 @@ func (r *FeedbackRepository) GetFeedbacksPaginated(ctx context.Context, skip uin
 }
 
 // Find finds and retrieves a single record with the given ID
-func (r *FeedbackRepository) FindFeedback(ctx context.Context, id uint) (f models.Feedback, err error) {
+func (r FeedbackRepository) FindFeedback(ctx context.Context, id uint) (f models.Feedback, err error) {
 	db := getDB(ctx, r.database.DB)
 	q := r.database.SB.
 		Select("id", "title", "body", "created_by", "extract(epoch from created_at) created_at").
@@ -98,7 +98,7 @@ func (r *FeedbackRepository) FindFeedback(ctx context.Context, id uint) (f model
 }
 
 // Create persists a new Feedback to the database and returns newly inserted Feedback
-func (r *FeedbackRepository) CreateFeedback(ctx context.Context, feedback *models.Feedback) (err error) {
+func (r FeedbackRepository) CreateFeedback(ctx context.Context, feedback *models.Feedback) (err error) {
 	db := getDB(ctx, r.database.DB)
 	q := r.database.SB.Insert("feedbacks").
 		Columns("title", "body", "created_by", "created_at").
@@ -123,11 +123,11 @@ func (r *FeedbackRepository) CreateFeedback(ctx context.Context, feedback *model
 }
 
 // UpdateTagIDs just panics right now, but will update "tag_id"s of feedbacks from x to y.
-func (r *FeedbackRepository) UpdateTagIDs(ctx context.Context, tagIDFrom uint, tagIDTo uint) error {
+func (r FeedbackRepository) UpdateTagIDs(ctx context.Context, tagIDFrom uint, tagIDTo uint) error {
 	panic("implement me")
 }
 
-func (r *FeedbackRepository) GetAll(ctx context.Context) ([]models.Feedback, error) {
+func (r FeedbackRepository) GetAll(ctx context.Context) ([]models.Feedback, error) {
 	db := getDB(ctx, r.database.DB)
 	q := r.database.SB.Select("id", "title", "body", "created_by", "extract(epoch from created_at) created_at").From("feedbacks")
 	sql, _, err := q.ToSql()
@@ -145,7 +145,7 @@ func (r *FeedbackRepository) GetAll(ctx context.Context) ([]models.Feedback, err
 	return got, err
 }
 
-func (r *FeedbackRepository) scan(rows pgx.Rows) (got []models.Feedback, err error) {
+func (r FeedbackRepository) scan(rows pgx.Rows) (got []models.Feedback, err error) {
 	got = []models.Feedback{}
 	for rows.Next() {
 		var f models.Feedback

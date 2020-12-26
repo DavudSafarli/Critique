@@ -11,15 +11,15 @@ import (
 
 // AttachmentRepository is AttachmentRepository
 type AttachmentRepository struct {
-	database *database
+	database database
 }
 
 // NewPGAttachmentRepository ..
-func NewPGAttachmentRepository(database *database) *AttachmentRepository {
-	return &AttachmentRepository{database}
+func NewPGAttachmentRepository(database database) AttachmentRepository {
+	return AttachmentRepository{database}
 }
 
-func (r *AttachmentRepository) GetAttachmentsByFeedbackID(ctx context.Context, feedbackID uint) ([]models.Attachment, error) {
+func (r AttachmentRepository) GetAttachmentsByFeedbackID(ctx context.Context, feedbackID uint) ([]models.Attachment, error) {
 	db := getDB(ctx, r.database.DB)
 	q := r.database.SB.
 		Select("id", "name", "path", "feedback_id").
@@ -38,7 +38,7 @@ func (r *AttachmentRepository) GetAttachmentsByFeedbackID(ctx context.Context, f
 	return got, err
 }
 
-func (r *AttachmentRepository) scan(rows pgx.Rows) (got []models.Attachment, err error) {
+func (r AttachmentRepository) scan(rows pgx.Rows) (got []models.Attachment, err error) {
 	got = []models.Attachment{}
 	for rows.Next() {
 		var r models.Attachment
@@ -55,7 +55,7 @@ func (r *AttachmentRepository) scan(rows pgx.Rows) (got []models.Attachment, err
 }
 
 // CreateMany persists new Attachments into the database
-func (r *AttachmentRepository) CreateManyAttachments(ctx context.Context, attachments []models.Attachment, feedbackID uint) error {
+func (r AttachmentRepository) CreateManyAttachments(ctx context.Context, attachments []models.Attachment, feedbackID uint) error {
 	db := getDB(ctx, r.database.DB)
 	q := r.database.SB.Insert("attachments").Columns("name", "path", "feedback_id")
 
@@ -85,7 +85,7 @@ func (r *AttachmentRepository) CreateManyAttachments(ctx context.Context, attach
 
 }
 
-func (r *AttachmentRepository) GetAllAttachments(ctx context.Context) ([]models.Attachment, error) {
+func (r AttachmentRepository) GetAllAttachments(ctx context.Context) ([]models.Attachment, error) {
 	db := getDB(ctx, r.database.DB)
 	q := r.database.SB.
 		Select("id", "name", "path", "feedback_id").

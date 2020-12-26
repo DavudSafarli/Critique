@@ -10,8 +10,8 @@ import (
 
 var (
 	sharedGlobalDatabaseInstanceInit sync.Once
-	sharedGlobalDatabaseInstance     *database
-	GetSharedGlobalDatabaseInstance  = func() *database {
+	sharedGlobalDatabaseInstance     database
+	GetSharedGlobalDatabaseInstance  = func() database {
 		sharedGlobalDatabaseInstanceInit.Do(func() {
 			connStr := testing_utils.GetTestDbConnStr()
 			storage, err := NewPostgresDatabase(connStr)

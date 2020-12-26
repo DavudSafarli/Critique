@@ -10,16 +10,16 @@ import (
 
 // TagRepository is TagRepository
 type TagRepository struct {
-	*database
+	database
 }
 
 // NewPGTagRepository ..
-func NewPGTagRepository(database *database) *TagRepository {
-	return &TagRepository{database}
+func NewPGTagRepository(database database) TagRepository {
+	return TagRepository{database}
 }
 
 // CreateMany persists new Tags into the database
-func (r *TagRepository) CreateManyTags(ctx context.Context, tags []models.Tag) error {
+func (r TagRepository) CreateManyTags(ctx context.Context, tags []models.Tag) error {
 	db := getDB(ctx, r.DB)
 	q := r.SB.Insert("tags").Columns("name")
 
@@ -52,7 +52,7 @@ func (r *TagRepository) CreateManyTags(ctx context.Context, tags []models.Tag) e
 }
 
 // Get returns all Tags
-func (r *TagRepository) GetTags(ctx context.Context) ([]models.Tag, error) {
+func (r TagRepository) GetTags(ctx context.Context) ([]models.Tag, error) {
 	db := getDB(ctx, r.DB)
 	q := r.SB.Select("*").From("tags")
 
@@ -80,7 +80,7 @@ func (r *TagRepository) GetTags(ctx context.Context) ([]models.Tag, error) {
 }
 
 // RemoveMany removes Tags of given tagIDs from database
-func (r *TagRepository) RemoveManyTags(ctx context.Context, tagIDs []uint) error {
+func (r TagRepository) RemoveManyTags(ctx context.Context, tagIDs []uint) error {
 	db := getDB(ctx, r.DB)
 	q := r.SB.Delete("tags")
 

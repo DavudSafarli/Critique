@@ -29,7 +29,7 @@ type database struct {
 // And use connection string below, to connect to postgres database:
 //
 // postgres://admin:critiquesecretpassword@localhost/critique?sslmode=disable
-func NewPostgresDatabase(connStr string) (*database, error) {
+func NewPostgresDatabase(connStr string) (database, error) {
 	poolConfig, err := pgxpool.ParseConfig(connStr)
 	poolConfig.MaxConns = 8
 	pool, err := pgxpool.ConnectConfig(context.Background(), poolConfig)
@@ -37,7 +37,7 @@ func NewPostgresDatabase(connStr string) (*database, error) {
 		log.Fatal("Unable to create connection pool", "error", err)
 	}
 
-	storage := &database{
+	storage := database{
 		DB: pool,
 		SB: squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar),
 	}
@@ -45,13 +45,13 @@ func NewPostgresDatabase(connStr string) (*database, error) {
 }
 
 type Storage struct {
-	*AttachmentRepository
-	*FeedbackRepository
-	*TagRepository
+	AttachmentRepository
+	FeedbackRepository
+	TagRepository
 }
 
-func NewPostgresStorage(attchRepo *AttachmentRepository, feedbackRepo *FeedbackRepository, tagRepo *TagRepository) *Storage {
-	return &Storage{
+func NewPostgresStorage(attchRepo AttachmentRepository, feedbackRepo FeedbackRepository, tagRepo TagRepository) Storage {
+	return Storage{
 		AttachmentRepository: attchRepo,
 		FeedbackRepository:   feedbackRepo,
 		TagRepository:        tagRepo,

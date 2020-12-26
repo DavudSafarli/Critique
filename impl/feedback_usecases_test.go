@@ -69,12 +69,13 @@ func TestFeedbackUc(t *testing.T) {
 			LetValueUnsafe(contracts.Feedback, s, f) // valid feedback
 
 			s.Before(func(t *testcase.T) { // replace storage with mock
-				mockRepo := &mocks.FailingAttachmentFakeStorage{
+				mockRepo := mocks.FailingAttachmentFakeStorage{
 					Storage: GetFeedbackUsecaseForTest(t).storage,
 				}
 				mockRepo.On("CreateManyAttachments", mock.Anything, mock.Anything, mock.Anything).Return(errors.New("Any error"))
 				uc := GetFeedbackUsecaseForTest(t)
 				uc.storage = mockRepo
+				FeedbackUsecaseForTest.Set(t, uc)
 			})
 			s.Then(`It should maintain atomicity(Db should not have a change)`, func(t *testcase.T) {
 				_, err := subject(t)
