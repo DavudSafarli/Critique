@@ -3,9 +3,8 @@ package impl
 import (
 	"context"
 	"errors"
-	"github.com/DavudSafarli/Critique/domain/contracts"
-	"github.com/DavudSafarli/Critique/domain/usecases"
 
+	"github.com/DavudSafarli/Critique/domain/contracts"
 	"github.com/DavudSafarli/Critique/domain/models"
 )
 
@@ -16,8 +15,8 @@ type AttachmentUsecasesImpl struct {
 type ai = AttachmentUsecasesImpl
 
 // NewAttachmentUsecases creates a new AttachmentUsecases
-func NewAttachmentUsecases(storage contracts.Storage) usecases.AttachmentUsecases {
-	return &AttachmentUsecasesImpl{
+func NewAttachmentUsecases(storage contracts.Storage) AttachmentUsecasesImpl {
+	return AttachmentUsecasesImpl{
 		storage: storage,
 	}
 }
@@ -25,7 +24,7 @@ func NewAttachmentUsecases(storage contracts.Storage) usecases.AttachmentUsecase
 var CreateFeedbackErr = errors.New("create-attachment-err")
 
 // CreateAttachment does what it says
-func (a *AttachmentUsecasesImpl) CreateAttachments(ctx context.Context, attachments []models.Attachment, feedbackID uint) (attchs []models.Attachment, err error) {
+func (a AttachmentUsecasesImpl) CreateAttachments(ctx context.Context, attachments []models.Attachment, feedbackID uint) (attchs []models.Attachment, err error) {
 	if len(attachments) == 0 {
 		return nil, CreateFeedbackErr
 	}

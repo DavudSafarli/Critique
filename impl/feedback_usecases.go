@@ -18,8 +18,8 @@ type FeedbackUsecasesImpl struct {
 }
 
 // NewFeedbackUsecasesImpl creates new FeedbackUsecasesImpl
-func NewFeedbackUsecasesImpl(storage contracts.Storage) usecases.FeedbackUsecases {
-	return &FeedbackUsecasesImpl{
+func NewFeedbackUsecasesImpl(storage contracts.Storage) FeedbackUsecasesImpl {
+	return FeedbackUsecasesImpl{
 		storage: storage,
 	}
 }
@@ -27,7 +27,7 @@ func NewFeedbackUsecasesImpl(storage contracts.Storage) usecases.FeedbackUsecase
 var createFeedbackErr = errors.New("create-feedback-err")
 
 // TODO: add integration test for validating Atomicity of CreateFeedback. If CreateAttchmnt fails, then feedback should not persist either
-func (g *fi) CreateFeedback(ctx context.Context, feedback models.Feedback) (emptyFeedback models.Feedback, err error) {
+func (g fi) CreateFeedback(ctx context.Context, feedback models.Feedback) (emptyFeedback models.Feedback, err error) {
 	if err = feedback.Validate(); err != nil {
 		return
 	}
@@ -50,11 +50,11 @@ func (g *fi) CreateFeedback(ctx context.Context, feedback models.Feedback) (empt
 	return feedback, nil
 }
 
-func (g *fi) GetFeedbackDetails(ctx context.Context, id uint) (models.Feedback, error) {
+func (g fi) GetFeedbackDetails(ctx context.Context, id uint) (models.Feedback, error) {
 	return g.storage.FindFeedback(ctx, id)
 }
 
-func (g *fi) GetFeedbacksWithPagination(ctx context.Context, pagination usecases.Pagination) ([]models.Feedback, error) {
+func (g fi) GetFeedbacksWithPagination(ctx context.Context, pagination usecases.Pagination) ([]models.Feedback, error) {
 	if pagination.Limit == 0 {
 		return nil, ZeroLimitPaginationErr
 	}
@@ -62,7 +62,7 @@ func (g *fi) GetFeedbacksWithPagination(ctx context.Context, pagination usecases
 	return g.storage.GetFeedbacksPaginated(ctx, pagination.Skip, pagination.Limit)
 }
 
-func (g *fi) commitOrRollback(ctx context.Context, err error) {
+func (g fi) commitOrRollback(ctx context.Context, err error) {
 	if err != nil {
 		err = g.storage.RollbackTx(ctx)
 		return
